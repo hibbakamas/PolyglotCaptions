@@ -1,16 +1,32 @@
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from fastapi.testclient import TestClient
-from app.main import app
+from main import app
 
+client = TestClient(app)
 
-client=TestClient(app)
+def test_translate_en_es():
+   payload = {
+       "text": "Hello everyone",
+       "from_lang": "en",
+       "to_lang": "es",
+   }
+   response = client.post("/translate", json=payload)
+   assert response.status_code == 200
+   data = response.json()
+   assert "translated_text" in data
+   assert data["from_lang"] == "en"
+   assert data["to_lang"] == "es"
+   assert data["translated_text"] != ""
 
-
-def test_transcribe_stub():
-    """testing /transcribe endpoint with a stub audio file."""
-
-    files={"audio":("chunk.webm", b"fake-bytes", "audio/webm")}
-    r=client.post("/transcribe?from_lang=en&to_lang=es", files=files)
-    j=r.json()
-    assert r.status_code==200
-    assert "original" in j and "translated" in j
-    assert j["fromLang"]=="en" and j["toLang"]=="es"
+def test_transcribe_text_echo():
+   payload = {
+       "text": "This is a test",
+   }
+   response = client.post("/transcribe", json=payload)
+   assert response.status_code == 200
+   data = response.json()
+   assert data["transcript"] == "This is a test"
