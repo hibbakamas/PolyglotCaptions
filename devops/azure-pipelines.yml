@@ -1,0 +1,17 @@
+# devops/azure-pipelines.yml
+trigger: { branches: { include: [ main ] } }
+stages:
+- stage: Build_Test
+  jobs:
+  - job: build
+    pool: { vmImage: 'ubuntu-latest' }
+    steps:
+    - task: UsePythonVersion@0
+      inputs: { versionSpec: '3.11' }
+    - script: |
+        cd app
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+        pytest -q
+      displayName: Install & Test
