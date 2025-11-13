@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 
-from services.translator_stub import fake_translate
-from services.stt_stub import fake_transcribe
+from app.services.translator_stub import fake_translate
+from app.services.stt_stub import fake_transcribe
 
 
 app = FastAPI(
