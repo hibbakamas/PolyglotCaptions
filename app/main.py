@@ -1,78 +1,62 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
+from typing import Optional
+import time
 
-
-from app.services.translator_stub import fake_translate
 from app.services.stt_stub import fake_transcribe
-
+from app.services.translator_stub import fake_translate
 
 app = FastAPI(
-   title="PolyglotCaptions API",
-   description="Local API for live translation & captions (Sprint 1 – stub implementation).",
-   version="0.1.0",
+    title="PolyglotCaptions API",
+    description="API for multi-language captions (Sprint 2 – stub backend).",
+    version="0.2.0",
 )
 
-
 class HealthResponse(BaseModel):
-   status: str
+    status: str
 
 
-
-class TranslateRequest(BaseModel):
-   text: str
-   from_lang: str
-   to_lang: str
-
-
-class TranslateResponse(BaseModel):
-   translated_text: str
-   from_lang: str
-   to_lang: str
-
-
-class TranscribeRequest(BaseModel):
-   text: str | None = None
-   audio_url: str | None = None
-
-
-
-class TranscribeResponse(BaseModel):
-   transcript: str
+class CaptionResponse(BaseModel):
+    transcript: str
+    translated_text: str
+    from_lang: str
+    to_lang: str
+    processing_ms: int
 
 
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-   """
-    health-check endpoint 
-   """
-   return HealthResponse(status="ok")
+    return HealthResponse(status="ok")
 
 
+@app.post("/caption", response_model=CaptionResponse)
+async def caption_endpoint(
+    audio: UploadFile = File(..., description="Audio file (webm/ogg/wav/mp3)"),
+    from_lang: str = Form(..., description="Source language code, e.g. en, es, fr"),
+    to_lang: str = Form(..., description="Target language code, e.g. en, es, fr"),
+):
 
+    start = time.perf_counter()
 
-@app.post("/translate", response_model=TranslateResponse)
-def translate(body: TranslateRequest) -> TranslateResponse:
-   """
-   Translate text between languages using the stubbed translator
-   """
-   translated = fake_translate(
-       text=body.text,
-       from_lang=body.from_lang,
-       to_lang=body.to_lang,
-   )
-   return TranslateResponse(
-       translated_text=translated,
-       from_lang=body.from_lang,
-       to_lang=body.to_lang,
-   )
+    try:
+        audio_bytes = await audio.read()
+        transcript = fake_transcribe(audio_bytes, from_lang)
 
+        translated = fake_translate(
+            text=transcript,
+            from_lang=from_lang,
+            to_lang=to_lang
+        )
 
+        total_ms = int((time.perf_counter() - start) * 1000)
 
+        return CaptionResponse(
+            transcript=transcript,
+            translated_text=translated,
+            from_lang=from_lang,
+            to_lang=to_lang,
+            processing_ms=total_ms,
+        )
 
-@app.post("/transcribe", response_model=TranscribeResponse)
-def transcribe(body: TranscribeRequest) -> TranscribeResponse:
-   """
-   Fake STT endpoint
-   """
-   transcript = fake_transcribe(text=body.text, audio_url=body.audio_url)
-   return TranscribeResponse(transcript=transcript)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
