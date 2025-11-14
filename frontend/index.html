@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="./styles.css"/>
 </head>
 <body>
-  <!-- Skip link for accessibility -->
   <a class="skip-link" href="#captions">Skip to captions</a>
 
   <header class="header" role="banner">
@@ -107,7 +106,6 @@
   </footer>
 
   <script>
-    // UI-only switches (no dependency on backend/JS teammate):
     const r = document.documentElement;
     document.getElementById('toggleLargeText').addEventListener('change', e => {
       r.toggleAttribute('data-large', e.target.checked);

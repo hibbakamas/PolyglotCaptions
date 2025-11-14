@@ -1,4 +1,3 @@
-// frontend/app.js
 const API_BASE = "http://127.0.0.1:8000";
 
 const $ = (id) => document.getElementById(id);
@@ -19,19 +18,16 @@ let sendInFlight = false;
 startBtn.onclick = async () => {
   if (recording) return;
 
-  // reset UI
   originalEl.textContent = "";
   translatedEl.textContent = "";
   metricsEl.textContent = "";
   statusEl.textContent = "Requesting microphone…";
 
   try {
-    // feature checks
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error("This browser doesn’t support microphone capture.");
     }
 
-    // pick a supported mime type
     let mimeType = "";
     if (MediaRecorder.isTypeSupported?.("audio/webm;codecs=opus")) {
       mimeType = "audio/webm;codecs=opus";
@@ -40,7 +36,6 @@ startBtn.onclick = async () => {
     } else if (MediaRecorder.isTypeSupported?.("audio/ogg;codecs=opus")) {
       mimeType = "audio/ogg;codecs=opus";
     } else {
-      // fallback: let browser choose; backend should handle/convert if needed
       mimeType = "";
     }
 
@@ -59,18 +54,15 @@ startBtn.onclick = async () => {
     };
 
     mediaRecorder.onstop = () => {
-      // stop tracks to release mic permission light
       stream.getTracks().forEach((t) => t.stop());
     };
 
-    // start collecting micro-chunks
     mediaRecorder.start(100);
 
-    // send a chunk every 3 seconds
     tickHandle = setInterval(async () => {
       if (!recording) return;
       if (!buffers.length) return;
-      if (sendInFlight) return; // avoid overlapping uploads if network is slow
+      if (sendInFlight) return; 
 
       const blob = new Blob(buffers, { type: mimeType || "audio/webm" });
       buffers = [];
@@ -84,7 +76,6 @@ startBtn.onclick = async () => {
   } catch (err) {
     console.error(err);
     statusEl.textContent = err?.message || "Microphone error.";
-    // ensure UI back to idle
     recording = false;
     startBtn.disabled = false;
     stopBtn.disabled = true;
@@ -161,7 +152,6 @@ async function sendChunk(blob) {
     translatedEl.textContent += (translatedEl.textContent ? " " : "") + data.translated;
   }
 
-  // Metrics line
   const net = Math.round(t1 - t0);
   const stt = data?.sttLatencyMs ?? 0;
   const trans = data?.transLatencyMs ?? 0;
@@ -173,7 +163,6 @@ async function sendChunk(blob) {
     `stt=${stt}ms trans=${trans}ms total=${total}ms net≈${net}ms chunk=${size}B`;
 }
 
-// helper
 async function safeText(res) {
   try { return await res.text(); } catch { return ""; }
 }
