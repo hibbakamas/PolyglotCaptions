@@ -1,53 +1,25 @@
 from dataclasses import dataclass
 import os
-from typing import Dict, Tuple
 
 
-#preparaing Azure tools for later sprints
 @dataclass
 class Settings:
-    # Azure Speech 
+    # Azure Speech (for later)
     azure_speech_key: str | None = os.getenv("AZURE_SPEECH_KEY")
     azure_speech_region: str | None = os.getenv("AZURE_SPEECH_REGION")
 
-    # Azure Translator 
+    # Azure Translator
     azure_translator_key: str | None = os.getenv("AZURE_TRANSLATOR_KEY")
     azure_translator_region: str | None = os.getenv("AZURE_TRANSLATOR_REGION")
+    azure_translator_endpoint: str | None = os.getenv("AZURE_TRANSLATOR_ENDPOINT")
 
+    # Feature flag: use real Azure Translator vs stub
+    use_azure_translator: bool = os.getenv("USE_AZURE_TRANSLATOR", "false").lower() == "true"
 
-    # this is just for demo / testing purposes
-    sample_transcripts: Dict[str, str] = None
-    sample_translations: Dict[Tuple[str, str], str] = None
-
-
-    supported_languages: list[str] = None
-
-
-    def __post_init__(self):
-        self.sample_transcripts = {
-            "en": "Hello everyone, welcome to our demo.",
-            "es": "Hola a todos, bienvenidos a nuestra demo.",
-            "fr": "Bonjour à tous, bienvenue à notre démonstration.",
-            "de": "Hallo zusammen, willkommen zu unserer Demo.",
-            "it": "Ciao a tutti, benvenuti alla nostra demo.",
-        }
-
-
-        self.sample_translations = {
-            ("en", "es"): "Hola a todos, bienvenidos a nuestra demo.",
-            ("en", "fr"): "Bonjour à tous, bienvenue à notre démonstration.",
-            ("en", "de"): "Hallo zusammen, willkommen zu unserer Demo.",
-            ("en", "it"): "Ciao a tutti, benvenuti alla nostra demo.",
-
-
-            ("es", "en"): "Hello everyone, welcome to our demo.",
-            ("fr", "en"): "Hello everyone, welcome to our demo.",
-            ("de", "en"): "Hello everyone, welcome to our demo.",
-            ("it", "en"): "Hello everyone, welcome to our demo.",
-        }
-
-
-        self.supported_languages = list(self.sample_transcripts.keys())
+    # Azure SQL Database
+    azure_sql_connection_string: str | None = os.getenv("AZURE_SQL_CONNECTION_STRING")
+    log_captions_to_db: bool = os.getenv("LOG_CAPTIONS_TO_DB", "false").lower() == "true"
 
 
 settings = Settings()
+
