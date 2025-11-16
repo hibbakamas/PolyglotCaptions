@@ -1,17 +1,28 @@
-# devops/azure-pipelines.yml
-trigger: { branches: { include: [ main ] } }
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
 stages:
 - stage: Build_Test
+  displayName: Build & Test
   jobs:
-  - job: build
-    pool: { vmImage: 'ubuntu-latest' }
+  - job: backend_tests
+    displayName: Run backend pytest suite
     steps:
     - task: UsePythonVersion@0
-      inputs: { versionSpec: '3.11' }
+      inputs:
+        versionSpec: '3.11'
+
     - script: |
-        cd app
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install -r requirements.txt
-        pytest -q
-      displayName: Install & Test
+        bash devops/scripts/run_tests.sh
+      displayName: Install deps & run pytest
