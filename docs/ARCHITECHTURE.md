@@ -103,3 +103,28 @@ Uses stubbed translation logic for Sprint 2
 
 Will later call Azure Translator API
 
+4. Backend Response
+
+Returns JSON:
+
+{
+  "translated_text": "..."
+}
+
+5. Frontend Renders Output
+
+Displays the result dynamically without reload.
+
+5. Configuration (Sprint 2 State)
+
+The backend uses a centralized Settings object to maintain environment-specific values.
+
+Current config includes:
+
+Supported languages
+
+Azure stub placeholders
+
+Future API keys (loaded via environment variables)
+
+All configurations are imported across the system from config.py.
