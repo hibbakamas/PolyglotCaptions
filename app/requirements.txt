@@ -1,6 +1,10 @@
 fastapi
 uvicorn
 python-multipart
-pydantic
+pydantic>=2.0
 pytest
 httpx
+python-dotenv
+python-multipart
+requests
+pyodbc
