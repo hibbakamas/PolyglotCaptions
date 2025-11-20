@@ -8,3 +8,9 @@ CREATE TABLE dbo.Captions (
     TranslatedText NVARCHAR(MAX) NOT NULL,
     ProcessingMs INT NOT NULL
 );
+
+
+-- Helpful indexes for common queries
+CREATE INDEX IX_Captions_CreatedAt ON dbo.Captions (CreatedAt DESC);
+CREATE INDEX IX_Captions_SessionId ON dbo.Captions (SessionId);
+
