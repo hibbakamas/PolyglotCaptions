@@ -26,3 +26,24 @@ stages:
     - script: |
         bash devops/scripts/run_tests.sh
       displayName: Install deps & run pytest
+
+# ------------------------------
+# DEPLOY STAGE
+# ------------------------------
+- stage: Deploy
+  displayName: Deploy to Azure Web App
+  dependsOn: Build_Test
+  condition: succeeded()
+
+  jobs:
+  - job: deploy_backend
+    displayName: Deploy backend to Azure Web App
+    steps:
+    - task: AzureWebApp@1
+      displayName: 'Deploy FastAPI backend'
+      inputs:
+        azureSubscription: 'polyglot-azure-connection'
+        appName: 'polyglotcaptions-api'
+        package: '$(System.DefaultWorkingDirectory)'
+        runtimeStack: 'PYTHON|3.11'
+        startupCommand: 'cd app && pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000'
