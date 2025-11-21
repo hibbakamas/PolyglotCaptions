@@ -1,4 +1,4 @@
-from .ai.speech import SpeechClient, SpeechConfig, AudioConfig, SpeechRecognizer
+from azure.ai.speech import SpeechClient, SpeechConfig, AudioConfig, SpeechRecognizer
 from app.config import settings
 import logging
 
