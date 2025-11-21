@@ -1,20 +1,24 @@
 # Polyglot Captions
 
-A multi-language caption app (Sprint 2 prototype) for transcription + translation.
+A multi-language caption app for transcription + translation.
 
-## Setup & Local Run
+- Sprint 2: local prototype with stub services.
+- Sprint 3: routers + Azure Translator + Azure SQL logging + connected frontend.
+
+---
+
+## Setup & Local Run (Backend)
 
 ```bash
-# Create and activate virtual environment
+# From repo root
 cd app
+
+# Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run FastAPI backend
-uvicorn app.main:app --reload --port 8000
-
-# Open frontend
-open ../frontend/index.html  # or serve via any local web server
+# Run FastAPI backend (local dev)
+uvicorn main:app --reload --port 8000
