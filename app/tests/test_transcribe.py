@@ -1,27 +1,26 @@
 from fastapi.testclient import TestClient
 from app.main import app
+from unittest.mock import patch
 
 client = TestClient(app)
 
-def test_translate_en_es():
-   payload = {
-       "text": "Hello everyone",
-       "from_lang": "en",
-       "to_lang": "es",
-   }
-   response = client.post("/translate", json=payload)
-   assert response.status_code == 200
-   data = response.json()
-   assert "translated_text" in data
-   assert data["from_lang"] == "en"
-   assert data["to_lang"] == "es"
-   assert data["translated_text"] != ""
 
-def test_transcribe_text_echo():
-   payload = {
-       "text": "This is a test",
-   }
-   response = client.post("/transcribe", json=payload)
-   assert response.status_code == 200
-   data = response.json()
-   assert data["transcript"] == "This is a test"
+def _post_caption(from_lang: str, to_lang: str):
+    files = {
+        "audio": ("chunk.webm", b"fake-audio-bytes", "audio/webm")
+    }
+    data = {
+        "from_lang": from_lang,
+        "to_lang": to_lang,
+    }
+    return client.post("/caption", files=files, data=data)
+
+
+@patch("app.services.stt_azure.azure_transcribe")
+def test_caption_azure_stt(mock_azure_stt):
+    mock_azure_stt.return_value = "Hello world"
+    resp = _post_caption("en", "es")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["transcript"] == "Hello world"
+    assert isinstance(data["translated_text"], str)
