@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from config import settings
 from services.stt_azure import azure_transcribe
+from services.stt_stub import fake_transcribe
 from services.translator_stub import fake_translate
 from services.translator_azure import azure_translate
 from services.db import insert_caption_entry
@@ -33,14 +34,18 @@ async def caption_endpoint(
     session_id: Optional[str] = Form(None),
 ) -> CaptionResponse:
     """
-    1) Azure STT with fallback to stub
+    1) Azure or stub STT
     2) Azure Translator if enabled, else stub
     3) Optional DB logging
+    4) Improved error handling
     """
     start = time.perf_counter()
 
     try:
         audio_bytes = await audio.read()
+        if not audio_bytes:
+            raise HTTPException(status_code=400, detail="No audio content received")
+
         logger.info(
             "Received /api/caption request pair=%s->%s size=%d",
             from_lang,
@@ -48,17 +53,32 @@ async def caption_endpoint(
             len(audio_bytes),
         )
 
-        # STT (Azure with fallback)
-        transcript = azure_transcribe(audio_bytes)
+        # STT
+        try:
+            transcript = azure_transcribe(audio_bytes)
+            if not transcript:
+                logger.warning("Azure STT returned empty transcript; falling back to stub")
+                transcript = fake_transcribe(audio_bytes, from_lang)
+        except Exception as stt_exc:
+            logger.exception("STT error, using fallback stub: %s", stt_exc)
+            transcript = fake_transcribe(audio_bytes, from_lang)
 
         # Translation
-        if settings.use_azure_translator:
-            translated = azure_translate(
-                text=transcript,
-                from_lang=from_lang,
-                to_lang=to_lang,
-            )
-        else:
+        try:
+            if settings.use_azure_translator:
+                translated = azure_translate(
+                    text=transcript,
+                    from_lang=from_lang,
+                    to_lang=to_lang,
+                )
+            else:
+                translated = fake_translate(
+                    text=transcript,
+                    from_lang=from_lang,
+                    to_lang=to_lang,
+                )
+        except Exception as trans_exc:
+            logger.exception("Translation error, using stub: %s", trans_exc)
             translated = fake_translate(
                 text=transcript,
                 from_lang=from_lang,
@@ -69,14 +89,17 @@ async def caption_endpoint(
 
         # DB logging (optional)
         if settings.log_captions_to_db:
-            insert_caption_entry(
-                from_lang=from_lang,
-                to_lang=to_lang,
-                transcript=transcript,
-                translated_text=translated,
-                processing_ms=total_ms,
-                session_id=session_id,
-            )
+            try:
+                insert_caption_entry(
+                    from_lang=from_lang,
+                    to_lang=to_lang,
+                    transcript=transcript,
+                    translated_text=translated,
+                    processing_ms=total_ms,
+                    session_id=session_id,
+                )
+            except Exception as db_exc:
+                logger.exception("DB logging failed: %s", db_exc)
 
         return CaptionResponse(
             transcript=transcript,
@@ -85,6 +108,10 @@ async def caption_endpoint(
             to_lang=to_lang,
             processing_ms=total_ms,
         )
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("Error in /api/caption endpoint: %s", exc)
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Unhandled error in /api/caption endpoint: %s", exc)
         raise HTTPException(status_code=500, detail="Internal error in caption endpoint")
+
