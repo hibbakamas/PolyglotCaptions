@@ -1,73 +1,56 @@
-from typing import Optional
-import time
+# app/main.py
+
+from pathlib import Path
 import logging
 
-
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 
-
-from app.services.stt_azure import azure_transcribe
-from app.routers import caption
 from app.config import settings
-from app.services.stt_stub import fake_transcribe
-from app.services.translator_stub import fake_translate
-from app.services.translator_azure import azure_translate
-from app.services.db import insert_caption_entry
+from app.routers.caption import router as caption_router
+from app.routers.health import router as health_router
 
-
-from dotenv import load_dotenv
-load_dotenv()
-
-
-# -------- logging ----------
+# ----- Logging -----
 logging.basicConfig(
-   level=logging.INFO,
-   format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("polyglot.api")
 
-if settings.enable_app_insights and settings.app_insights_instrumentation_key:
-   from opencensus.ext.azure.log_exporter import AzureLogHandler
-   handler = AzureLogHandler(
-       connection_string=f'InstrumentationKey={settings.app_insights_instrumentation_key}'
-   )
-   logger.addHandler(handler)
-   logger.info("Azure App Insights logging enabled")
-
-
+# ----- FastAPI App -----
 app = FastAPI(
-   title="PolyglotCaptions API",
-   description="API for multi-language captions (Sprint 4 – Azure + DB + Monitoring).",
-   version="0.4.0",
+    title="PolyglotCaptions API",
+    version="0.4.0",
 )
 
-app.include_router(caption.router)
-
-
+# ----- CORS -----
 app.add_middleware(
-   CORSMiddleware,
-   allow_origins=[
-       "http://127.0.0.1:5500",
-       "http://localhost:5500",
-   ],
-   allow_credentials=True,
-   allow_methods=["*"],
-   allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=["*"],      # local dev-friendly
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-class HealthResponse(BaseModel):
-   status: str
+# ----- Routers -----
+app.include_router(health_router)
+app.include_router(caption_router)
 
+# ------------------------------------------------------------
+# Correct STATIC FILE SERVING
+# Your actual folder is: PolyglotCaptions/frontend/
+# ------------------------------------------------------------
+ROOT_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = ROOT_DIR / "frontend"
 
-class CaptionResponse(BaseModel):
-   transcript: str
-   translated_text: str
-   from_lang: str
-   to_lang: str
-   processing_ms: int
+if not FRONTEND_DIR.exists():
+    logger.error("❌ Frontend directory not found: %s", FRONTEND_DIR)
+else:
+    logger.info("✅ Serving frontend from %s", FRONTEND_DIR)
 
-@app.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-   return HealthResponse(status="ok")
+app.mount(
+    "/",
+    StaticFiles(directory=str(FRONTEND_DIR), html=True),
+    name="frontend",
+)
