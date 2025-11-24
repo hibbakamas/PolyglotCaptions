@@ -1,9 +1,7 @@
-from __future__ import annotations
-
-
 from typing import Optional
 import time
 import logging
+logger = logging.getLogger("polyglot.api")
 
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
@@ -18,7 +16,6 @@ from app.services.db import insert_caption_entry
 
 
 router = APIRouter(prefix="/api", tags=["caption"])
-logger = logging.getLogger("polyglot.api.caption")
 
 
 class CaptionResponse(BaseModel):
@@ -54,29 +51,17 @@ async def caption_endpoint(
 
 
        # ---- STT ----
-       try:
-           transcript = azure_transcribe(audio_bytes)
-       except Exception as stt_exc:
-           logger.exception("Azure STT failed: %s", stt_exc)
-           raise HTTPException(status_code=500, detail="Azure STT failed")
+       transcript = azure_transcribe(audio_bytes)
 
 
        # ---- Translation ----
-       try:
-           if settings.use_azure_translator:
-               translated = azure_translate(
-                   text=transcript,
-                   from_lang=from_lang,
-                   to_lang=to_lang,
-               )
-           else:
-               translated = fake_translate(
-                   text=transcript,
-                   from_lang=from_lang,
-                   to_lang=to_lang,
-               )
-       except Exception as trans_exc:
-           logger.exception("Translation error, using stub: %s", trans_exc)
+       if settings.use_azure_translator:
+           translated = azure_translate(
+               text=transcript,
+               from_lang=from_lang,
+               to_lang=to_lang,
+           )
+       else:
            translated = fake_translate(
                text=transcript,
                from_lang=from_lang,
