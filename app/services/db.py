@@ -7,7 +7,7 @@ import pyodbc
 from app.config import settings
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("polyglot.api.db")
 
 
 def _get_connection() -> pyodbc.Connection:
@@ -23,14 +23,18 @@ def insert_caption_entry(
    translated_text: str,
    processing_ms: int,
    session_id: Optional[str] = None,
-) -> None:
- 
+) -> bool:
+
    conn = None
    try:
        conn = _get_connection()
        with conn.cursor() as cursor:
            now = datetime.utcnow()
            cursor.execute(
+               """
+               INSERT INTO Captions (CreatedAt, SessionId, FromLang, ToLang, Transcript, TranslatedText, ProcessingMs)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               """,
                now,
                session_id,
                from_lang,
@@ -40,6 +44,8 @@ def insert_caption_entry(
                processing_ms,
            )
        conn.commit()
+       logger.info("Caption entry inserted successfully")
+       return True
    except Exception as exc:
        logger.error("Failed to insert caption entry into DB: %s", exc, exc_info=True)
        if conn:
@@ -47,6 +53,7 @@ def insert_caption_entry(
                conn.rollback()
            except Exception as rb_exc:
                logger.error("Rollback failed: %s", rb_exc, exc_info=True)
+       return False
    finally:
        if conn:
            try:
