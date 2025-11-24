@@ -4,6 +4,9 @@ from __future__ import annotations
 from typing import Optional
 import time
 import logging
+logger = logging.getLogger("polyglot.api")
+
+
 
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
@@ -18,7 +21,6 @@ from app.services.db import insert_caption_entry
 
 
 router = APIRouter(prefix="/api", tags=["caption"])
-logger = logging.getLogger("polyglot.api.caption")
 
 
 class CaptionResponse(BaseModel):
@@ -37,51 +39,39 @@ async def caption_endpoint(
    session_id: Optional[str] = Form(None),
 ) -> CaptionResponse:
    start = time.perf_counter()
+   logger.info("Caption request received: %s->%s", from_lang, to_lang) 
 
 
    try:
        audio_bytes = await audio.read()
        if not audio_bytes:
+           logger.warning("Caption request with empty audio")  
            raise HTTPException(status_code=400, detail="No audio content received")
 
 
-       logger.info(
-           "Received /api/caption request pair=%s->%s size=%d",
-           from_lang,
-           to_lang,
-           len(audio_bytes),
-       )
-
-
        # ---- STT ----
-       try:
-           transcript = azure_transcribe(audio_bytes)
-       except Exception as stt_exc:
-           logger.exception("Azure STT failed: %s", stt_exc)
-           raise HTTPException(status_code=500, detail="Azure STT failed")
+       stt_start = time.perf_counter()
+       transcript = azure_transcribe(audio_bytes)
+       stt_duration = int((time.perf_counter() - stt_start) * 1000)
+       logger.info("Azure STT completed in %dms", stt_duration)  
 
 
        # ---- Translation ----
-       try:
-           if settings.use_azure_translator:
-               translated = azure_translate(
-                   text=transcript,
-                   from_lang=from_lang,
-                   to_lang=to_lang,
-               )
-           else:
-               translated = fake_translate(
-                   text=transcript,
-                   from_lang=from_lang,
-                   to_lang=to_lang,
-               )
-       except Exception as trans_exc:
-           logger.exception("Translation error, using stub: %s", trans_exc)
+       translation_start = time.perf_counter()
+       if settings.use_azure_translator:
+           translated = azure_translate(
+               text=transcript,
+               from_lang=from_lang,
+               to_lang=to_lang,
+           )
+       else:
            translated = fake_translate(
                text=transcript,
                from_lang=from_lang,
                to_lang=to_lang,
            )
+       translation_duration = int((time.perf_counter() - translation_start) * 1000)
+       logger.info("Translation completed in %dms", translation_duration)
 
 
        total_ms = int((time.perf_counter() - start) * 1000)
@@ -89,19 +79,19 @@ async def caption_endpoint(
 
        # ---- DB logging (optional) ----
        if settings.log_captions_to_db:
-           try:
-               insert_caption_entry(
-                   from_lang=from_lang,
-                   to_lang=to_lang,
-                   transcript=transcript,
-                   translated_text=translated,
-                   processing_ms=total_ms,
-                   session_id=session_id,
-               )
-           except Exception as db_exc:
-               logger.exception("DB logging failed: %s", db_exc)
+           success = insert_caption_entry(
+               from_lang=from_lang,
+               to_lang=to_lang,
+               transcript=transcript,
+               translated_text=translated,
+               processing_ms=total_ms,
+               session_id=session_id,
+           )
+           if not success:
+               logger.warning("DB logging failed for session: %s", session_id)  
 
 
+       logger.info("Caption request processed in %dms", total_ms)  
        return CaptionResponse(
            transcript=transcript,
            translated_text=translated,
@@ -114,5 +104,5 @@ async def caption_endpoint(
    except HTTPException:
        raise
    except Exception as exc:
-       logger.exception("Unhandled error in /api/caption endpoint: %s", exc)
+       logger.exception("Unhandled error in /api/caption endpoint: %s", exc) 
        raise HTTPException(status_code=500, detail="Internal error in caption endpoint")
