@@ -1,74 +1,80 @@
-FakeTR – System Architecture Document
-1. Overview
+# PolyglotCaptions – System Architecture Document (Sprint 4)
 
-FakeTR is a simplified speech-to-text and translation web application designed for educational purposes. The architecture emphasizes modularity, clean layering, and readiness for Azure-based enhancements in later sprints.
+## 1. Overview
 
-The system is composed of a FastAPI backend and a browser-based frontend that communicate over JSON/REST. Azure connectors are intentionally stubbed in early sprints to allow fast development and later integration.
+PolyglotCaptions is a multi-language speech-to-text and translation web application. The architecture emphasizes modularity, testability, and readiness for Azure cloud integration.
 
-2. High-Level Architecture
+The system uses a FastAPI backend and a browser-based frontend communicating over JSON/REST. Azure Speech and Azure Translator are now fully integrated, with fallbacks to stubs for testing and error handling. Monitoring and logging via Azure App Insights are also implemented.
 
-FakeTR follows a three-layer structure:
+## 2. High-Level Architecture
 
-a. Presentation Layer (Frontend)
+PolyglotCaptions follows a three-layer structure:
 
-Runs in the browser.
-Responsibilities:
+### a. Presentation Layer (Frontend)
+- Runs in the browser.
+- Responsibilities:
+  - User interactions
+  - Capturing audio input
+  - Displaying transcribed and translated text
+  - Basic input validation
 
-User interactions
+### b. Application Layer (API – FastAPI Backend)
+- Orchestration and routing logic.
+- Responsibilities:
+  - Validate requests
+  - Route audio to STT (Azure Speech or fallback stub)
+  - Route text to translation service (Azure Translator or fallback stub)
+  - Format JSON responses
+  - Log usage and errors to Azure SQL and App Insights
 
-Capturing input text
+### c. Service Layer
+- Encapsulated, testable logic.
+- Responsibilities:
+  - Speech-to-text processing (Azure Speech + stub fallback)
+  - Translation functionality (Azure Translator + stub fallback)
+  - Database logging
+  - Azure connectors
+  - Monitoring and telemetry integration
 
-Displaying translated text
-
-Basic validation (ensured in Sprint 2)
-
-b. Application Layer (API – FastAPI Backend)
-
-Main orchestration logic.
-Responsibilities:
-
-Input validation
-
-Routing requests to the translation service
-
-Formatting responses
-
-Managing errors
-
-c. Service Layer
-
-Encapsulated, testable logic.
-Responsibilities:
-
-Translation functionality
-
-Speech functionality (future sprints)
-
-Azure connectors (future sprints)
-
-3. Directory Structure (as of Sprint 2 completion)
-FakeTR/
+## 3. Directory Structure (Sprint 4 State)
+PolyglotCaptions/
 │
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                 # FastAPI entry point
-│   ├── config.py               # Centralized settings (keys, languages)
+│   ├── main.py                 # FastAPI entry point with App Insights logging
+│   ├── config.py               # Centralized settings (Azure keys, feature flags)
 │   │
 │   ├── services/
 │   │   ├── __init__.py
-│   │   └── translate_service.py
+│   │   ├── db.py
+│   │   ├── stt_azure.py
+│   │   ├── stt_stub.py
+│   │   ├── translator_azure.py
+│   │   └── translator_stub.py
 │   │
 │   ├── routers/
 │   │   ├── __init__.py
-│   │   └── translate_router.py
+│   │   ├── caption.py          # Caption endpoint with improved error handling
+│   │   └── health.py
 │   │
-│   └── schemas/
-│       ├── __init__.py
-│       └── translate_schema.py
+│   └── tests/
+│       ├── test_caption.py
+│       ├── test_health.py
+│       └── test_transcribe.py
 │
 ├── frontend/
 │   ├── index.html
-│   └── script.js
+│   ├── app.js
+│   └── styles.css
+│
+├── devops/
+│   ├── azure-pipelines.yml
+│   ├── kql/
+│   │   ├── errors.kql
+│   │   └── latency_by_pair.kql
+│   └── scripts/
+│       ├── smoke.sh
+│       └── run_tests.sh
 │
 ├── docs/
 │   ├── README.md
@@ -76,55 +82,4 @@ FakeTR/
 │   └── ARCHITECTURE.md
 │
 ├── requirements.txt
-└── venv/
-
-4. Data Flow
-1. User Interaction
-
-User enters text in the frontend and selects a target language.
-
-2. Frontend to Backend (REST)
-
-script.js sends:
-
-POST /api/translate
-{
-  "text": "...",
-  "target_lang": "..."
-}
-
-3. Backend Processing
-
-Validates the request schema
-
-Passes the data to translate_service
-
-Uses stubbed translation logic for Sprint 2
-
-Will later call Azure Translator API
-
-4. Backend Response
-
-Returns JSON:
-
-{
-  "translated_text": "..."
-}
-
-5. Frontend Renders Output
-
-Displays the result dynamically without reload.
-
-5. Configuration (Sprint 2 State)
-
-The backend uses a centralized Settings object to maintain environment-specific values.
-
-Current config includes:
-
-Supported languages
-
-Azure stub placeholders
-
-Future API keys (loaded via environment variables)
-
-All configurations are imported across the system from config.py.
+└── .env.example
