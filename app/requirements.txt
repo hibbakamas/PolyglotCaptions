@@ -11,3 +11,4 @@ pyodbc
 
 azure-core
 azure-cognitiveservices-speech
+pydantic-settings

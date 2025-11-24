@@ -1,62 +1,45 @@
-import logging
-from datetime import datetime
-from typing import Optional
-
-import pyodbc
+# app/services/db.py
 
 from app.config import settings
+import logging
+
+logger = logging.getLogger("polyglot.db")
 
 
-logger = logging.getLogger("polyglot.api.db")
+def insert_caption_entry(transcript: str, translation: str, from_lang: str, to_lang: str) -> bool:
+    """
+    Inserts a caption log into Azure SQL if enabled. Returns True on success, False on failure.
+    """
 
+    # If DB logging disabled → return gracefully
+    if not settings.log_captions_to_db:
+        logger.debug("DB logging disabled (LOG_CAPTIONS_TO_DB=false). Skipping insert.")
+        return False
 
-def _get_connection() -> pyodbc.Connection:
-   if not settings.azure_sql_connection_string:
-       raise RuntimeError("AZURE_SQL_CONNECTION_STRING not configured")
-   return pyodbc.connect(settings.azure_sql_connection_string, autocommit=False)
+    # If no connection string, bail quietly
+    if not settings.azure_sql_connection_string:
+        logger.warning("Azure SQL connection string missing. Cannot insert caption.")
+        return False
 
+    try:
+        import pyodbc  # 👈 moved local to avoid import errors on macOS
 
-def insert_caption_entry(
-   from_lang: str,
-   to_lang: str,
-   transcript: str,
-   translated_text: str,
-   processing_ms: int,
-   session_id: Optional[str] = None,
-) -> bool:
+        conn = pyodbc.connect(settings.azure_sql_connection_string, timeout=5)
+        cursor = conn.cursor()
 
-   conn = None
-   try:
-       conn = _get_connection()
-       with conn.cursor() as cursor:
-           now = datetime.utcnow()
-           cursor.execute(
-               """
-               INSERT INTO Captions (CreatedAt, SessionId, FromLang, ToLang, Transcript, TranslatedText, ProcessingMs)
-               VALUES (?, ?, ?, ?, ?, ?, ?)
-               """,
-               now,
-               session_id,
-               from_lang,
-               to_lang,
-               transcript,
-               translated_text,
-               processing_ms,
-           )
-       conn.commit()
-       logger.info("Caption entry inserted successfully")
-       return True
-   except Exception as exc:
-       logger.error("Failed to insert caption entry into DB: %s", exc, exc_info=True)
-       if conn:
-           try:
-               conn.rollback()
-           except Exception as rb_exc:
-               logger.error("Rollback failed: %s", rb_exc, exc_info=True)
-       return False
-   finally:
-       if conn:
-           try:
-               conn.close()
-           except Exception as close_exc:
-               logger.warning("Failed to close DB connection: %s", close_exc, exc_info=True)
+        query = """
+            INSERT INTO Captions (transcript, translation, from_lang, to_lang)
+            VALUES (?, ?, ?, ?)
+        """
+
+        cursor.execute(query, (transcript, translation, from_lang, to_lang))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        logger.info("DB insert ok.")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to insert caption into DB: {e}")
+        return False
