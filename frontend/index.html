@@ -5,7 +5,7 @@
   <title>Polyglot Captions</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
-  <link rel="stylesheet" href="./styles.css"/>
+  <link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
   <a class="skip-link" href="#captions">Skip to captions</a>
@@ -105,18 +105,6 @@
     </div>
   </footer>
 
-  <script>
-    const r = document.documentElement;
-    document.getElementById('toggleLargeText').addEventListener('change', e => {
-      r.toggleAttribute('data-large', e.target.checked);
-    });
-    document.getElementById('toggleHighContrast').addEventListener('change', e => {
-      r.toggleAttribute('data-contrast', e.target.checked);
-    });
-    document.getElementById('toggleDarkMode').addEventListener('change', e => {
-      r.toggleAttribute('data-force-dark', e.target.checked);
-    });
-  </script>
-  <script src="./app.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
