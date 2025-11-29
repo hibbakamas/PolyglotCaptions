@@ -2,7 +2,6 @@
 
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
     azure_speech_key: str = ""
     azure_speech_region: str = "eastus"
@@ -14,6 +13,13 @@ class Settings(BaseSettings):
 
     log_captions_to_db: bool = False
 
+    # --- DATABASE SETTINGS ---
+    azure_sql_connection_string: str = ""  # full connection string
+    db_server: str = ""
+    db_name: str = ""
+    db_user: str = ""
+    db_password: str = ""
+
     sample_transcripts: dict = {
         "en": "stub transcript 1",
         "es": "transcripción breve 1",
@@ -24,6 +30,5 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-
 
 settings = Settings()
