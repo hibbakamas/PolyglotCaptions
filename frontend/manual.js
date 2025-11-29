@@ -5,12 +5,11 @@ const resultEl = document.getElementById("manualResult");
 const translateBtn = document.getElementById("manualBtn");
 const saveBtn = document.getElementById("saveManualBtn");
 
-// TRANSLATE
 translateBtn.onclick = async () => {
     const text = inputEl.value.trim();
     if (!text) return;
 
-    const res = await fetch("/api/manual-translate", {
+    const res = await fetch("/api/manual/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json"},
         body: JSON.stringify({
@@ -24,11 +23,10 @@ translateBtn.onclick = async () => {
     resultEl.textContent = data.translated_text || "(no translation)";
 };
 
-// SAVE TO DB
 saveBtn.onclick = async () => {
     if (!inputEl.value.trim() || !resultEl.textContent.trim()) return;
 
-    await fetch("/api/manual-captions", {
+    await fetch("/api/manual/save", {
         method: "POST",
         headers: { "Content-Type": "application/json"},
         body: JSON.stringify({
