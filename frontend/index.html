@@ -1,110 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8"/>
-  <title>Polyglot Captions</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="color-scheme" content="light dark"/>
-  <link rel="stylesheet" href="/styles.css"/>
+  <title>Polyglot Captions – Home</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
 </head>
+
 <body>
-  <a class="skip-link" href="#captions">Skip to captions</a>
+<header>
+  <h1>Polyglot Captions</h1>
+  <div class="header-buttons">
+    <button onclick="goRecord()" class="btn btn--primary">Record</button>
+    <button onclick="goManual()" class="btn">Manual</button>
+    <button onclick="goHistory()" class="btn">History</button>
+  </div>
+</header>
 
-  <header class="header" role="banner">
-    <div class="brand">
-      <span class="brand__dot" aria-hidden="true"></span>
-      <h1 class="brand__title">Polyglot Captions</h1>
-    </div>
+<div class="page-container">
+  <h2>Welcome</h2>
+  <p>Select an option above to begin.</p>
+</div>
 
-    <div class="status" aria-live="polite">
-      <span class="status__pill status__pill--live" title="Live capture">LIVE</span>
-      <span id="status" class="status__text mono">Idle</span>
-    </div>
-  </header>
-
-  <main class="container" role="main">
-    <section class="panel controls" aria-labelledby="controls-label">
-      <h2 id="controls-label" class="sr-only">Controls</h2>
-
-      <div class="controls__row">
-        <label class="field">
-          <span class="field__label">From</span>
-          <select id="fromLang" class="field__select" aria-label="Source language">
-            <option value="en" selected>English (en)</option>
-            <option value="es">Spanish (es)</option>
-            <option value="fr">French (fr)</option>
-            <option value="de">German (de)</option>
-            <option value="it">Italian (it)</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span class="field__label">To</span>
-          <select id="toLang" class="field__select" aria-label="Target language">
-            <option value="es" selected>Spanish (es)</option>
-            <option value="en">English (en)</option>
-            <option value="fr">French (fr)</option>
-            <option value="de">German (de)</option>
-            <option value="it">Italian (it)</option>
-          </select>
-        </label>
-
-        <div class="controls__buttons" role="group" aria-label="Recording controls">
-          <button id="startBtn" class="btn btn--primary" type="button">
-            Start
-          </button>
-          <button id="stopBtn" class="btn" type="button" disabled>
-            Stop
-          </button>
-        </div>
-      </div>
-
-      <div class="toggles">
-        <label class="toggle">
-          <input id="toggleLargeText" type="checkbox" class="toggle__input" />
-          <span class="toggle__label">Large text</span>
-        </label>
-        <label class="toggle">
-          <input id="toggleHighContrast" type="checkbox" class="toggle__input" />
-          <span class="toggle__label">High contrast</span>
-        </label>
-        <label class="toggle">
-          <input id="toggleDarkMode" type="checkbox" class="toggle__input" />
-          <span class="toggle__label">Dark mode</span>
-        </label>
-      </div>
-    </section>
-
-    <section id="captions" class="panel captions" aria-labelledby="captions-label">
-      <h2 id="captions-label" class="sr-only">Captions</h2>
-
-      <div class="caption-block">
-        <div class="caption-block__label">Original</div>
-        <div id="original" class="caption-block__text" aria-live="polite" aria-atomic="false"></div>
-      </div>
-
-      <div class="caption-block">
-        <div class="caption-block__label">Translation</div>
-        <div id="translated" class="caption-block__text caption-block__text--accent" aria-live="polite" aria-atomic="false"></div>
-      </div>
-    </section>
-
-    <section class="panel metrics" aria-labelledby="metrics-label">
-      <h2 id="metrics-label" class="sr-only">Metrics</h2>
-      <div id="metrics" class="mono metrics__text" aria-live="polite"></div>
-    </section>
-  </main>
-
-  <footer class="footer" role="contentinfo">
-    <div class="footer__left mono">
-      Build: <span id="buildMeta">local</span>
-    </div>
-    <div class="footer__right">
-      <a class="footer__link" href="#" aria-disabled="true" tabindex="-1">Docs</a>
-      <a class="footer__link" href="#" aria-disabled="true" tabindex="-1">Privacy</a>
-    </div>
-  </footer>
-
-  <script src="/app.js"></script>
+<script src="/static/app.js"></script>
 </body>
 </html>

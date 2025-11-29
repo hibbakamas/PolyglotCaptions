@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <title>Record Caption</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body>
+
+<header>
+  <h1>Record Caption</h1>
+  <div class="header-buttons">
+    <button onclick="window.location='/'" class="btn">Back</button>
+  </div>
+</header>
+
+<div class="page-container">
+  <h2>Live Translation</h2>
+
+  <label>From:</label>
+  <select id="fromLang">
+    <option value="en">English</option>
+    <option value="es">Spanish</option>
+  </select>
+
+  <label>To:</label>
+  <select id="toLang">
+    <option value="es">Spanish</option>
+    <option value="en">English</option>
+  </select>
+
+  <br><br>
+
+  <button id="startBtn" class="btn btn--primary">Start</button>
+  <button id="stopBtn" class="btn" disabled>Stop</button>
+
+  <p id="status">Idle</p>
+
+  <h3>Original:</h3>
+  <p id="original"></p>
+
+  <h3>Translated:</h3>
+  <p id="translated"></p>
+</div>
+
+<script src="/static/record.js"></script>
+</body>
+</html>

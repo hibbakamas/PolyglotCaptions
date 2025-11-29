@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <title>Manual Translation</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+</head>
+<body>
+
+<header>
+  <h1>Manual Translation</h1>
+  <div class="header-buttons">
+    <button onclick="window.location='/'" class="btn">Back</button>
+  </div>
+</header>
+
+<div class="page-container">
+
+  <label>Text to translate:</label>
+  <textarea id="manualInput"></textarea>
+
+  <label>From:</label>
+  <select id="manualFrom">
+    <option value="en">English</option>
+    <option value="es">Spanish</option>
+  </select>
+
+  <label>To:</label>
+  <select id="manualTo">
+    <option value="es">Spanish</option>
+    <option value="en">English</option>
+  </select>
+
+  <br><br>
+  <button id="manualBtn" class="btn btn--primary">Translate</button>
+
+  <h3>Translated Text:</h3>
+  <p id="manualResult"></p>
+
+  <button id="saveManualBtn" class="btn" style="margin-top:20px;">Save</button>
+
+</div>
+
+<script src="/static/manual.js"></script>
+</body>
+</html>
