@@ -9,7 +9,8 @@
 <header>
   <h1>Manual Translation</h1>
   <div class="header-buttons">
-    <button onclick="window.location='/'" class="btn">Back</button>
+    <button onclick="window.location='/static/index.html'" class="btn">Back</button>
+    <button onclick="logout()" class="btn btn--danger">Logout</button>
   </div>
 </header>
 
@@ -39,6 +40,23 @@
   <button id="saveManualBtn" class="btn" style="margin-top:20px;">Save</button>
 
 </div>
+
+<script>
+  // Redirect to login if no JWT
+  const token = localStorage.getItem("jwt");
+  if (!token) {
+    window.location.href = "/login.html";
+  }
+
+  function goHome() {
+    window.location.href = "/";
+  }
+
+  function logout() {
+    localStorage.removeItem("jwt");
+    window.location.href = "/static/login.html";
+  }
+</script>
 
 <script src="/static/manual.js"></script>
 </body>

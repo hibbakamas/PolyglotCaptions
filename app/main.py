@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from app.routers.caption import router as caption_router
 from app.routers.manual import router as manual_router
 from app.routers.logs import router as logs_router
+from app.routers.auth import router as auth_router
 
 app = FastAPI()
 
@@ -15,19 +16,19 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 # ---- ROUTES FOR PAGES --------------------------------------
 
-@app.get("/")
-async def serve_home():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+@app.get("/", include_in_schema=False)
+async def serve_login():
+    return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
 
-@app.get("/record")
+@app.get("/record", include_in_schema=False)
 async def serve_record():
     return FileResponse(os.path.join(FRONTEND_DIR, "record.html"))
 
-@app.get("/manual")
+@app.get("/manual", include_in_schema=False)
 async def serve_manual():
     return FileResponse(os.path.join(FRONTEND_DIR, "manual.html"))
 
-@app.get("/history")
+@app.get("/history", include_in_schema=False)
 async def serve_history():
     return FileResponse(os.path.join(FRONTEND_DIR, "history.html"))
 
@@ -36,8 +37,10 @@ async def serve_history():
 app.include_router(caption_router)
 app.include_router(manual_router)
 app.include_router(logs_router)
+app.include_router(auth_router)
 
 
+# ---- HEALTH CHECK ------------------------------------------
 @app.get("/health")
 async def health():
     return {"status": "ok"}

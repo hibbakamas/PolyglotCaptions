@@ -1,41 +1,66 @@
-const inputEl = document.getElementById("manualInput");
-const fromEl = document.getElementById("manualFrom");
-const toEl = document.getElementById("manualTo");
-const resultEl = document.getElementById("manualResult");
-const translateBtn = document.getElementById("manualBtn");
-const saveBtn = document.getElementById("saveManualBtn");
+document.addEventListener("DOMContentLoaded", () => {
+    const inputEl = document.getElementById("manualInput");
+    const fromEl = document.getElementById("manualFrom");
+    const toEl = document.getElementById("manualTo");
+    const resultEl = document.getElementById("manualResult");
+    const translateBtn = document.getElementById("manualBtn");
+    const saveBtn = document.getElementById("saveManualBtn");
 
-translateBtn.onclick = async () => {
-    const text = inputEl.value.trim();
-    if (!text) return;
+    const token = localStorage.getItem("jwt");
+    if (!token) {
+        window.location.href = "/login.html";
+        return;
+    }
 
-    const res = await fetch("/api/manual/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({
-            text,
-            from_lang: fromEl.value,
-            to_lang: toEl.value
-        })
-    });
+    translateBtn.onclick = async () => {
+        const text = inputEl.value.trim();
+        if (!text) return;
 
-    const data = await res.json();
-    resultEl.textContent = data.translated_text || "(no translation)";
-};
+        try {
+            const res = await fetch("/api/manual/translate", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    text,
+                    from_lang: fromEl.value,
+                    to_lang: toEl.value
+                })
+            });
 
-saveBtn.onclick = async () => {
-    if (!inputEl.value.trim() || !resultEl.textContent.trim()) return;
+            const data = await res.json();
+            resultEl.textContent = data.translated_text || "(no translation)";
+        } catch (err) {
+            console.error(err);
+            alert("Translation failed");
+        }
+    };
 
-    await fetch("/api/manual/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({
-            transcript: inputEl.value,
-            translated_text: resultEl.textContent,
-            from_lang: fromEl.value,
-            to_lang: toEl.value
-        })
-    });
+    saveBtn.onclick = async () => {
+        if (!inputEl.value.trim() || !resultEl.textContent.trim()) return;
 
-    alert("Saved!");
-};
+        try {
+            const res = await fetch("/api/manual/save", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    transcript: inputEl.value,
+                    translated_text: resultEl.textContent,
+                    from_lang: fromEl.value,
+                    to_lang: toEl.value
+                })
+            });
+
+            if (!res.ok) throw new Error("Failed to save");
+            alert("Saved!");
+        } catch (err) {
+            console.error(err);
+            alert("Save failed");
+        }
+    };
+});

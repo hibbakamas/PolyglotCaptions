@@ -92,3 +92,27 @@ def fetch_recent_captions(limit: int = 20):
         cursor.execute(sql)
         columns = [col[0] for col in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+# -----------------------------
+# User-related DB operations
+# -----------------------------
+def get_user_by_username(username: str):
+    sql = "SELECT * FROM dbo.Users WHERE Username = ?"
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(sql, username)
+        row = cur.fetchone()
+        if not row:
+            return None
+        cols = [c[0] for c in cur.description]
+        return dict(zip(cols, row))
+
+
+def create_user(username: str, hashed_password: str):
+    sql = """
+    INSERT INTO dbo.Users (Username, HashedPassword)
+    VALUES (?, ?)
+    """
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(sql, username, hashed_password)
