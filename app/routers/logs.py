@@ -1,14 +1,8 @@
 from typing import Any, Dict, List
-
-
 from fastapi import APIRouter, Query
-
-
-from services.db import fetch_recent_captions
-
+from app.db.db import fetch_recent_captions
 
 router = APIRouter(prefix="/api", tags=["logs"])
-
 
 @router.get("/captions/logs")
 def get_caption_logs(limit: int = Query(20, ge=1, le=100)) -> Dict[str, Any]:

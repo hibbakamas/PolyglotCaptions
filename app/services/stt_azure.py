@@ -1,18 +1,16 @@
-# app/services/stt_azure.py
 import time
 import logging
 import tempfile
 import subprocess
 
-from app.config import settings
 import azure.cognitiveservices.speech as speechsdk
+from app.config import settings
 from app.services.stt_stub import fake_transcribe
 
 logger = logging.getLogger("polyglot.services.stt_azure")
 
 
 def convert_webm_to_wav(input_bytes: bytes) -> str:
-    """Convert WebM/Opus bytes → WAV file using ffmpeg."""
     try:
         with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as f_in:
             f_in.write(input_bytes)
@@ -24,8 +22,6 @@ def convert_webm_to_wav(input_bytes: bytes) -> str:
             "ffmpeg",
             "-y",
             "-i", src,
-            "-acodec", "pcm_s16le",
-            "-ar", "16000",
             wav_file
         ]
 
@@ -39,12 +35,9 @@ def convert_webm_to_wav(input_bytes: bytes) -> str:
 
 def azure_transcribe(audio_bytes: bytes, from_lang: str) -> str:
     if not audio_bytes:
-        logger.warning("Empty audio sent to STT")
         return ""
 
-    # If Azure not configured → stub
     if not settings.azure_speech_key or not settings.azure_speech_region:
-        logger.warning("Azure STT disabled → using stub transcription.")
         return fake_transcribe(audio_bytes, from_lang)
 
     stt_start = time.perf_counter()
@@ -71,15 +64,12 @@ def azure_transcribe(audio_bytes: bytes, from_lang: str) -> str:
         )
 
         result = recognizer.recognize_once()
-        duration_ms = int((time.perf_counter() - stt_start) * 1000)
 
         if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            logger.info(f"Azure STT OK ({duration_ms}ms)")
             return result.text
 
-        logger.error(f"Azure STT returned: {result.reason}")
-        raise RuntimeError("Azure STT failed")
+        return ""
 
     except Exception as exc:
-        logger.error(f"Azure STT crashed → fallback stub: {exc}")
+        logger.error(f"Azure STT crashed → using stub: {exc}")
         return fake_transcribe(audio_bytes, from_lang)

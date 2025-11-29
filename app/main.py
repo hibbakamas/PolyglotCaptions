@@ -1,56 +1,43 @@
-# app/main.py
-
-from pathlib import Path
-import logging
-
+import os
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
-from app.config import settings
 from app.routers.caption import router as caption_router
-from app.routers.health import router as health_router
+from app.routers.manual import router as manual_router
+from app.routers.logs import router as logs_router
 
-# ----- Logging -----
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-logger = logging.getLogger("polyglot.api")
+app = FastAPI()
 
-# ----- FastAPI App -----
-app = FastAPI(
-    title="PolyglotCaptions API",
-    version="0.4.0",
-)
+# Serve frontend folder
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-# ----- CORS -----
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],      # local dev-friendly
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# ---- ROUTES FOR PAGES --------------------------------------
 
-# ----- Routers -----
-app.include_router(health_router)
+@app.get("/")
+async def serve_home():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+@app.get("/record")
+async def serve_record():
+    return FileResponse(os.path.join(FRONTEND_DIR, "record.html"))
+
+@app.get("/manual")
+async def serve_manual():
+    return FileResponse(os.path.join(FRONTEND_DIR, "manual.html"))
+
+@app.get("/history")
+async def serve_history():
+    return FileResponse(os.path.join(FRONTEND_DIR, "history.html"))
+
+
+# ---- API ROUTES --------------------------------------------
 app.include_router(caption_router)
+app.include_router(manual_router)
+app.include_router(logs_router)
 
-# ------------------------------------------------------------
-# Correct STATIC FILE SERVING
-# Your actual folder is: PolyglotCaptions/frontend/
-# ------------------------------------------------------------
-ROOT_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = ROOT_DIR / "frontend"
 
-if not FRONTEND_DIR.exists():
-    logger.error("❌ Frontend directory not found: %s", FRONTEND_DIR)
-else:
-    logger.info("✅ Serving frontend from %s", FRONTEND_DIR)
-
-app.mount(
-    "/",
-    StaticFiles(directory=str(FRONTEND_DIR), html=True),
-    name="frontend",
-)
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
