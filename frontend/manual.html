@@ -3,54 +3,69 @@
 <head>
   <title>Manual Translation</title>
   <link rel="stylesheet" href="/static/styles.css"/>
+  <style>
+    .manual-card {
+        max-width: 700px;
+        margin: 40px auto;
+    }
+    #manualResultBox {
+        background: #1f2937;
+        border: 1px solid #374151;
+        padding: 18px;
+        border-radius: 10px;
+        margin-top: 10px;
+        min-height: 60px;
+        white-space: pre-wrap;
+    }
+  </style>
 </head>
+
 <body>
 
 <header>
   <h1>Manual Translation</h1>
+
   <div class="header-buttons">
-    <button onclick="window.location='/static/index.html'" class="btn">Back</button>
-    <button onclick="logout()" class="btn btn--danger">Logout</button>
+    <button class="btn" onclick="window.location='/static/index.html'">Back</button>
+    <button class="btn btn--danger" onclick="logout()">Logout</button>
   </div>
 </header>
 
 <div class="page-container">
 
-  <label>Text to translate:</label>
-  <textarea id="manualInput"></textarea>
+  <div class="card manual-card">
 
-  <label>From:</label>
-  <select id="manualFrom">
-    <option value="en">English</option>
-    <option value="es">Spanish</option>
-  </select>
+    <label>Text to translate:</label>
+    <textarea id="manualInput"></textarea>
 
-  <label>To:</label>
-  <select id="manualTo">
-    <option value="es">Spanish</option>
-    <option value="en">English</option>
-  </select>
+    <label>From:</label>
+    <select id="manualFrom">
+      <option value="en">English</option>
+      <option value="es">Spanish</option>
+    </select>
 
-  <br><br>
-  <button id="manualBtn" class="btn btn--primary">Translate</button>
+    <label>To:</label>
+    <select id="manualTo">
+      <option value="es">Spanish</option>
+      <option value="en">English</option>
+    </select>
 
-  <h3>Translated Text:</h3>
-  <p id="manualResult"></p>
+    <button id="manualBtn" class="btn btn--primary" style="margin-top:10px;">Translate</button>
 
-  <button id="saveManualBtn" class="btn" style="margin-top:20px;">Save</button>
+    <h3 style="margin-top:25px;">Translated Text:</h3>
 
+    <div id="manualResultBox">
+      <span id="manualResult"></span>
+    </div>
+
+    <button id="saveManualBtn" class="btn" style="margin-top:20px;">Save</button>
+
+  </div>
 </div>
 
 <script>
-  // Redirect to login if no JWT
   const token = localStorage.getItem("jwt");
-  if (!token) {
-    window.location.href = "/login.html";
-  }
-
-  function goHome() {
-    window.location.href = "/";
-  }
+  if (!token) window.location.href = "/static/login.html";
 
   function logout() {
     localStorage.removeItem("jwt");
@@ -59,5 +74,6 @@
 </script>
 
 <script src="/static/manual.js"></script>
+
 </body>
 </html>

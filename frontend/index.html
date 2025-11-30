@@ -3,11 +3,27 @@
 <head>
   <title>Polyglot Captions – Home</title>
   <link rel="stylesheet" href="/static/styles.css"/>
+  <style>
+    .home-center {
+        text-align: center;
+        margin-top: 80px;
+    }
+    .home-center h2 {
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+    .home-center p {
+        font-size: 18px;
+        color: #9ca3af;
+    }
+  </style>
 </head>
 
 <body>
+
 <header>
   <h1>Polyglot Captions</h1>
+
   <div class="header-buttons">
     <button id="recordBtn" class="btn btn--primary">Record</button>
     <button id="manualBtn" class="btn">Manual</button>
@@ -17,29 +33,25 @@
 </header>
 
 <div class="page-container">
-  <h2>Welcome</h2>
-  <p>Select an option above to begin.</p>
+  <div class="home-center">
+    <h2>Welcome</h2>
+    <p>Select an option above to begin.</p>
+  </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    // Require login
     const token = localStorage.getItem("jwt");
-    if (!token) {
-        window.location.href = "/static/login.html";
-    }
+    if (!token) window.location.href = "/static/login.html";
 
-    document.getElementById("recordBtn").onclick = () => {
+    document.getElementById("recordBtn").onclick = () =>
         window.location.href = "/static/record.html";
-    };
 
-    document.getElementById("manualBtn").onclick = () => {
+    document.getElementById("manualBtn").onclick = () =>
         window.location.href = "/static/manual.html";
-    };
 
-    document.getElementById("historyBtn").onclick = () => {
+    document.getElementById("historyBtn").onclick = () =>
         window.location.href = "/static/history.html";
-    };
 
     document.getElementById("logoutBtn").onclick = () => {
         localStorage.removeItem("jwt");
@@ -47,5 +59,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 });
 </script>
+
 </body>
 </html>

@@ -3,56 +3,69 @@
 <head>
   <title>Record Caption</title>
   <link rel="stylesheet" href="/static/styles.css"/>
+  <style>
+    .record-card {
+        max-width: 700px;
+        margin: 40px auto;
+    }
+    .translation-box {
+        background: #1f2937;
+        border: 1px solid #374151;
+        padding: 15px;
+        border-radius: 10px;
+        min-height: 50px;
+        margin-bottom: 20px;
+        white-space: pre-wrap;
+    }
+  </style>
 </head>
+
 <body>
 
 <header>
   <h1>Record Caption</h1>
+
   <div class="header-buttons">
-    <button onclick="window.location='/static/index.html'" class="btn">Back</button>
-    <button onclick="logout()" class="btn btn--danger">Logout</button>
+    <button class="btn" onclick="window.location='/static/index.html'">Back</button>
+    <button class="btn btn--danger" onclick="logout()">Logout</button>
   </div>
 </header>
 
 <div class="page-container">
-  <h2>Live Translation</h2>
 
-  <label>From:</label>
-  <select id="fromLang">
-    <option value="en">English</option>
-    <option value="es">Spanish</option>
-  </select>
+  <div class="card record-card">
 
-  <label>To:</label>
-  <select id="toLang">
-    <option value="es">Spanish</option>
-    <option value="en">English</option>
-  </select>
+    <h2>Live Translation</h2>
 
-  <br><br>
+    <label>From:</label>
+    <select id="fromLang">
+      <option value="en">English</option>
+      <option value="es">Spanish</option>
+    </select>
 
-  <button id="startBtn" class="btn btn--primary">Start</button>
-  <button id="stopBtn" class="btn" disabled>Stop</button>
+    <label>To:</label>
+    <select id="toLang">
+      <option value="es">Spanish</option>
+      <option value="en">English</option>
+    </select>
 
-  <p id="status">Idle</p>
+    <button id="startBtn" class="btn btn--primary" style="margin-top:15px;">Start</button>
+    <button id="stopBtn" class="btn" disabled style="margin-top:10px;">Stop</button>
 
-  <h3>Original:</h3>
-  <p id="original"></p>
+    <p id="status" style="margin-top:15px; font-size:16px;">Idle</p>
 
-  <h3>Translated:</h3>
-  <p id="translated"></p>
+    <h3>Original:</h3>
+    <div class="translation-box" id="original"></div>
+
+    <h3>Translated:</h3>
+    <div class="translation-box" id="translated"></div>
+
+  </div>
 </div>
 
 <script>
-  // Require login
   const token = localStorage.getItem("jwt");
-  if (!token) {
-    window.location.href = "/login.html";
-  }
-
-  function goHome() {
-    window.location.href = "/";
-  }
+  if (!token) window.location.href = "/static/login.html";
 
   function logout() {
     localStorage.removeItem("jwt");
@@ -61,5 +74,6 @@
 </script>
 
 <script src="/static/record.js"></script>
+
 </body>
 </html>
