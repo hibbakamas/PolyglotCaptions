@@ -8,6 +8,9 @@ on:
 
 jobs:
 
+  # -----------------------------
+  # 1) CI TEST JOB
+  # -----------------------------
   test_and_build:
     runs-on: ubuntu-latest
 
@@ -29,10 +32,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # IMPORTANT: FIXED TEST COMMAND
       - name: Run tests + coverage
         run: |
-          pytest --disable-warnings --maxfail=1 --cov=.
+          pytest --disable-warnings --maxfail=1
 
+  # -----------------------------
+  # 2) CD DEPLOY JOB
+  # -----------------------------
   build_push_and_deploy:
     needs: test_and_build
     runs-on: ubuntu-latest
