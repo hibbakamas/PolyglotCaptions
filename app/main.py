@@ -1,20 +1,61 @@
 import os
+import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from opencensus.ext.azure.trace_exporter import AzureExporter
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+from opencensus.trace.samplers import ProbabilitySampler
+from opencensus.trace.tracer import Tracer
 
 from app.routers.caption import router as caption_router
 from app.routers.manual import router as manual_router
 from app.routers.logs import router as logs_router
 from app.routers.auth import router as auth_router
+from app.routers.health import router as health_router
+from app.config import settings
 
 app = FastAPI()
 
-# Serve frontend folder
+# ===================================================================
+#                    APPLICATION INSIGHTS SETUP  
+# ===================================================================
+
+if settings.app_insights_key:
+    # Tracer for telemetry
+    tracer = Tracer(
+        exporter=AzureExporter(
+            connection_string=f"InstrumentationKey={settings.app_insights_key}"
+        ),
+        sampler=ProbabilitySampler(1.0),
+    )
+
+    # Logging → Azure
+    ai_handler = AzureLogHandler(
+        connection_string=f"InstrumentationKey={settings.app_insights_key}"
+    )
+    logger = logging.getLogger("polyglot")
+    logger.setLevel(logging.INFO)
+    logger.addHandler(ai_handler)
+
+    # Middleware for tracing requests
+    class RequestTraceMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            with tracer.span(name=f"{request.method} {request.url.path}"):
+                response = await call_next(request)
+                return response
+
+    app.add_middleware(RequestTraceMiddleware)
+
+
+# ===================================================================
+#                          FRONTEND ROUTES
+# ===================================================================
+
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-
-# ---- ROUTES FOR PAGES --------------------------------------
 
 @app.get("/", include_in_schema=False)
 async def serve_login():
@@ -33,14 +74,21 @@ async def serve_history():
     return FileResponse(os.path.join(FRONTEND_DIR, "history.html"))
 
 
-# ---- API ROUTES --------------------------------------------
+# ===================================================================
+#                           API ROUTERS
+# ===================================================================
+
 app.include_router(caption_router)
 app.include_router(manual_router)
 app.include_router(logs_router)
 app.include_router(auth_router)
+app.include_router(health_router)
 
 
-# ---- HEALTH CHECK ------------------------------------------
+# ===================================================================
+#                           ROOT HEALTH
+# ===================================================================
+
 @app.get("/health")
-async def health():
+async def root_health():
     return {"status": "ok"}

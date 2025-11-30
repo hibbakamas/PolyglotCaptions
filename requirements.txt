@@ -15,3 +15,8 @@ azure-cognitiveservices-speech
 
 python-jose[cryptography]
 passlib[bcrypt]
+
+opencensus-ext-azure
+opencensus-ext-fastapi
+opencensus-ext-logging
+opencensus-ext-requests
