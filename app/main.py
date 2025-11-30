@@ -4,13 +4,13 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+
 from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.trace.samplers import ProbabilitySampler
 from opencensus.trace.tracer import Tracer
-from app.routers.health import router as health_router
-
 
 from app.routers.caption import router as caption_router
 from app.routers.manual import router as manual_router
@@ -26,7 +26,6 @@ app = FastAPI()
 # ===================================================================
 
 if settings.app_insights_key:
-    # Tracer for telemetry
     tracer = Tracer(
         exporter=AzureExporter(
             connection_string=f"InstrumentationKey={settings.app_insights_key}"
@@ -34,7 +33,6 @@ if settings.app_insights_key:
         sampler=ProbabilitySampler(1.0),
     )
 
-    # Logging → Azure
     ai_handler = AzureLogHandler(
         connection_string=f"InstrumentationKey={settings.app_insights_key}"
     )
@@ -42,15 +40,24 @@ if settings.app_insights_key:
     logger.setLevel(logging.INFO)
     logger.addHandler(ai_handler)
 
-    # Middleware for tracing requests
     class RequestTraceMiddleware(BaseHTTPMiddleware):
         async def dispatch(self, request, call_next):
             with tracer.span(name=f"{request.method} {request.url.path}"):
-                response = await call_next(request)
-                return response
+                return await call_next(request)
 
     app.add_middleware(RequestTraceMiddleware)
 
+# ===================================================================
+#                          CORS (REQUIRED ON AZURE)  
+# ===================================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ===================================================================
 #                          FRONTEND ROUTES
@@ -75,7 +82,6 @@ async def serve_manual():
 async def serve_history():
     return FileResponse(os.path.join(FRONTEND_DIR, "history.html"))
 
-
 # ===================================================================
 #                           API ROUTERS
 # ===================================================================
@@ -85,7 +91,6 @@ app.include_router(manual_router)
 app.include_router(logs_router)
 app.include_router(auth_router)
 app.include_router(health_router)
-
 
 # ===================================================================
 #                           ROOT HEALTH

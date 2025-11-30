@@ -26,7 +26,7 @@
   <h1>Record Caption</h1>
 
   <div class="header-buttons">
-    <button class="btn" onclick="window.location='/static/index.html'">Back</button>
+    <button class="btn" onclick="window.location='/'">Back</button>
     <button class="btn btn--danger" onclick="logout()">Logout</button>
   </div>
 </header>
@@ -65,11 +65,11 @@
 
 <script>
   const token = localStorage.getItem("jwt");
-  if (!token) window.location.href = "/static/login.html";
+  if (!token) window.location.href = "/";
 
   function logout() {
     localStorage.removeItem("jwt");
-    window.location.href = "/static/login.html";
+    window.location.href = "/";
   }
 </script>
 

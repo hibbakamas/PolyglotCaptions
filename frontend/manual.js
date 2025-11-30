@@ -6,12 +6,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const translateBtn = document.getElementById("manualBtn");
     const saveBtn = document.getElementById("saveManualBtn");
 
+    // Check auth
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/login.html";
+        window.location.href = "/";
         return;
     }
 
+    // -------------------------------
+    // TRANSLATE BUTTON
+    // -------------------------------
     translateBtn.onclick = async () => {
         const text = inputEl.value.trim();
         if (!text) return;
@@ -31,15 +35,27 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const data = await res.json();
-            resultEl.textContent = data.translated_text || "(no translation)";
+
+            if (!res.ok) {
+                resultEl.textContent = data.detail || "Translation failed";
+                return;
+            }
+
+            resultEl.textContent = data.translated_text || "(No translation)";
         } catch (err) {
             console.error(err);
-            alert("Translation failed");
+            resultEl.textContent = "Error contacting API";
         }
     };
 
+    // -------------------------------
+    // SAVE BUTTON
+    // -------------------------------
     saveBtn.onclick = async () => {
-        if (!inputEl.value.trim() || !resultEl.textContent.trim()) return;
+        const original = inputEl.value.trim();
+        const translated = resultEl.textContent.trim();
+
+        if (!original || !translated) return;
 
         try {
             const res = await fetch("/api/manual/save", {
@@ -49,18 +65,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    transcript: inputEl.value,
-                    translated_text: resultEl.textContent,
+                    transcript: original,
+                    translated_text: translated,
                     from_lang: fromEl.value,
                     to_lang: toEl.value
                 })
             });
 
-            if (!res.ok) throw new Error("Failed to save");
+            if (!res.ok) {
+                alert("Save failed");
+                return;
+            }
+
             alert("Saved!");
         } catch (err) {
             console.error(err);
-            alert("Save failed");
+            alert("Error saving entry");
         }
     };
 });
