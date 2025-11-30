@@ -13,10 +13,17 @@ jobs:
   #########################################################
   ci:
     runs-on: ubuntu-latest
+    env:
+      USE_DB_STUB: "true"    # <---- THIS DISABLES REAL AZURE SQL IN CI
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Remove real DB module for CI
+        run: |
+          rm app/db/db.py
+          mv app/db/db_stub.py app/db/db.py
 
       - name: Set up Python
         uses: actions/setup-python@v5
