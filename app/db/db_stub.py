@@ -41,6 +41,7 @@ def insert_caption_entry(
     to_lang,
     processing_ms,
     session_id=None,
+    user_id=None,
 ):
     global _NEXT_ID
     cid = _NEXT_ID
@@ -54,8 +55,10 @@ def insert_caption_entry(
         "ToLang": to_lang,
         "ProcessingMs": processing_ms,
         "SessionId": session_id,
+        "UserId": user_id,
     }
     return cid
+
 
 
 def fetch_captions():
