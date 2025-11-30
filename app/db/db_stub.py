@@ -42,6 +42,7 @@ def insert_caption_entry(
     processing_ms,
     session_id=None,
     user_id=None,
+    created_at=None,        # <-- FIX ADDED HERE
 ):
     global _NEXT_ID
     cid = _NEXT_ID
@@ -56,6 +57,7 @@ def insert_caption_entry(
         "ProcessingMs": processing_ms,
         "SessionId": session_id,
         "UserId": user_id,
+        "CreatedAt": created_at,     # <-- Added to match real DB
     }
     return cid
 
