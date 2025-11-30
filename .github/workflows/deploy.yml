@@ -1,4 +1,4 @@
-name: CI/CD - Build, Test, Dockerize & Deploy
+name: CI-CD PolyglotCaptions
 
 on:
   push:
@@ -8,72 +8,65 @@ on:
 
 jobs:
 
-  
-  # 1) CI — Lint + Tests + Coverage
+  #########################################################
+  #   CI JOB
+  #########################################################
   ci:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-cov flake8
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pytest pytest-cov
 
-    - name: Lint with flake8
-      run: |
-        flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+      - name: Lint
+        run: |
+          flake8 app \
+            --exclude=app/.venv,*/venv,*/.venv \
+            --count --select=E9,F63,F7,F82 --show-source --statistics
 
-    - name: Run tests with coverage
-      run: |
-        pytest --cov=app --cov-report=xml --cov-report=term-missing
+      - name: Run tests + coverage
+        run: |
+          pytest --cov=app --cov-report=xml --cov-report=term
 
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: coverage.xml
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
 
-  
-  # 2) CD — Build Docker image, push to DockerHub, deploy to Azure Web App (Container)
+
+  #########################################################
+  #   CD JOB – BUILD + PUSH DOCKER IMAGE
+  #########################################################
   cd:
     needs: ci
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'  # Only deploy on main branch
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    # Login to DockerHub
-    - name: Login to DockerHub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Log into Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-    # Build the Docker image
-    - name: Build Docker Image
-      run: |
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/polyglotcaptions:latest .
+      - name: Build Docker image
+        run: |
+          docker build -t gvega2212/polyglotcaptions:latest .
 
-    # Push to DockerHub
-    - name: Push Docker Image
-      run: |
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/polyglotcaptions:latest
-
-    # Deploy to Azure Web App (container)
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v3
-      with:
-        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
-        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-        images: ${{ secrets.DOCKERHUB_USERNAME }}/polyglotcaptions:latest
+      - name: Push Docker image
+        run: |
+          docker push gvega2212/polyglotcaptions:latest

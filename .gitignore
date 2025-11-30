@@ -1,34 +1,34 @@
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+*.pyc
+*.pyo
 
 # Virtual environments
-venv/
 .venv/
-env/
-ENV/
-**/venv/
-**/.venv/
-**/env/
+venv/
+app/.venv/
 
-# Testing
-.pytest_cache/
+# Environment files
+.env
+*.env
+
+# Coverage
 .coverage
 htmlcov/
 
-# IDE
+# Bytecode caches
+*/__pycache__/
+
+# VSCode
 .vscode/
-.idea/
-*.swp
-*.swo
 
-# OS
+# MacOS stuff
 .DS_Store
-Thumbs.db
 
-# Environment variables
-.env
-.env.local
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Docker
+*.log
