@@ -72,7 +72,6 @@ stages:
       artifact: drop
       displayName: "Publish Build Artifact"
 
-
 #######################################################
 #         STAGE 2 — CONTINUOUS DEPLOYMENT
 #######################################################
@@ -92,26 +91,40 @@ stages:
           steps:
 
           #######################################################
-          # Download artifact from CI stage
+          # Download CI artifact
           #######################################################
           - download: current
             artifact: drop
 
           #######################################################
-          # Deploy using ZipDeploy API
-          #######################################################
-          - task: AzureWebApp@1
-            displayName: "Deploy FastAPI backend to Azure Web App"
-            inputs:
-              azureSubscription: "polyglot_webapp_publish"   # your generic service connection
-              appType: webApp
-              appName: "polyglotcaptions-api"
-              package: "$(Pipeline.Workspace)/drop/app.zip"
-
-          #######################################################
-          # Verify Deployment (curl health)
+          # Prepare artifact for deployment
           #######################################################
           - script: |
-              echo "Checking health endpoint..."
+              mkdir deploy
+              cp "$(Pipeline.Workspace)/drop/app.zip" deploy/app.zip
+            displayName: "Prepare Artifact"
+
+          #######################################################
+          # ZIPDEPLOY USING PUBLISH PROFILE (BULLETPROOF)
+          #######################################################
+          - task: Bash@3
+            displayName: "Deploy using ZipDeploy"
+            inputs:
+              targetType: inline
+              script: |
+                echo "Starting ZipDeploy..."
+
+                curl -X POST \
+                  -u "$(polyglot_webapp_publish.username):$(polyglot_webapp_publish.password)" \
+                  --data-binary "@deploy/app.zip" \
+                  "https://polyglotcaptions-api-aadtfvffg2g0h7d7.scm.westeurope-01.azurewebsites.net/api/zipdeploy"
+
+                echo "ZipDeploy complete."
+          
+          #######################################################
+          # Verify Deployment via /health
+          #######################################################
+          - script: |
+              echo "Checking /health ..."
               curl -I https://polyglotcaptions-api-aadtfvffg2g0h7d7.westeurope-01.azurewebsites.net/health
-            displayName: "Verify Deployment Health Check"
+            displayName: "Verify Deployment Health"
