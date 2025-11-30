@@ -41,12 +41,13 @@ jobs:
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build AMD64 Docker image
+      - name: Build and Push AMD64 Docker image
         run: |
           docker buildx create --use
           docker buildx build \
             --platform linux/amd64 \
             -t gvega2212/polyglotcaptions:latest \
+            -t gvega2212/polyglotcaptions:${{ github.sha }} \
             --push .
 
       - name: Deploy to Azure Web App
@@ -54,4 +55,16 @@ jobs:
         with:
           app-name: polyglotcaptions-api
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: gvega2212/polyglotcaptions:latest
+          images: gvega2212/polyglotcaptions:${{ github.sha }}
+
+      - name: Force Azure to restart (ensures new image loads)
+        run: |
+          echo "${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}" > publishProfile.xml
+          az webapp restart \
+            --name polyglotcaptions-api \
+            --resource-group polyglotcaptions-api \
+            --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        shell: bash
+        env:
+          AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+
