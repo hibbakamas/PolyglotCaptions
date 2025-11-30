@@ -64,18 +64,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # -------------------------------------------
-      # DockerHub Login
-      # -------------------------------------------
       - name: Log into Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # -------------------------------------------
-      # Build & Push Image
-      # -------------------------------------------
       - name: Build Docker image
         run: |
           docker build -t gvega2212/polyglotcaptions:latest .
@@ -84,20 +78,13 @@ jobs:
         run: |
           docker push gvega2212/polyglotcaptions:latest
 
-      # -------------------------------------------
-      # Azure Login
-      # -------------------------------------------
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # -------------------------------------------
-      # Deploy to Azure Web App for Containers
-      # -------------------------------------------
-      - name: Deploy container to Azure Web App
-        uses: azure/webapps-container-deploy@v1
+      - name: Deploy to Azure Web App (Docker Container)
+        uses: azure/webapps-deploy@v2
         with:
           app-name: "polyglotcaptions-api"
-          resource-group: "BCSAI2025-DEVOPS-STUDENT-4A"
-          container-image: "gvega2212/polyglotcaptions:latest"
+          images: "gvega2212/polyglotcaptions:latest"
