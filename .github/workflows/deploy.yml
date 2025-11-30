@@ -1,4 +1,4 @@
-name: CI - Tests, Docker Build & Deploy (Container)
+name: CI - Tests, Docker Build & Deploy
 
 on:
   push:
@@ -7,20 +7,12 @@ on:
   pull_request:
 
 jobs:
-
-  # -----------------------------
-  # 1) CI TEST JOB
-  # -----------------------------
   test_and_build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Use stub DB for CI tests
-        run: |
-          rm app/db/db.py
-          cp app/db/db_stub.py app/db/db.py
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -31,35 +23,33 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest pytest-cov
 
-      # IMPORTANT: FIXED TEST COMMAND
       - name: Run tests + coverage
         run: |
-          pytest --disable-warnings --maxfail=1
+          pytest --disable-warnings --maxfail=1 --cov=app
 
-  # -----------------------------
-  # 2) CD DEPLOY JOB
-  # -----------------------------
   build_push_and_deploy:
     needs: test_and_build
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Login to Docker Hub
         run: |
-          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build Docker image
+      - name: Build AMD64 Docker image
         run: |
-          docker build -t gvega2212/polyglotcaptions:latest .
+          docker buildx create --use
+          docker buildx build \
+            --platform linux/amd64 \
+            -t gvega2212/polyglotcaptions:latest \
+            --push .
 
-      - name: Push Docker image
-        run: |
-          docker push gvega2212/polyglotcaptions:latest
-
-      - name: Deploy to Azure Web App (Docker)
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: polyglotcaptions-api
