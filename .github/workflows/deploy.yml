@@ -14,7 +14,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     env:
-      USE_DB_STUB: "true"    # <---- THIS DISABLES REAL AZURE SQL IN CI
+      USE_DB_STUB: "true"
 
     steps:
       - name: Checkout code
@@ -54,7 +54,7 @@ jobs:
 
 
   #########################################################
-  #   CD JOB – BUILD + PUSH DOCKER IMAGE
+  #   CD JOB – BUILD + PUSH + DEPLOY TO AZURE
   #########################################################
   cd:
     needs: ci
@@ -64,12 +64,18 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # -------------------------------------------
+      # DockerHub Login
+      # -------------------------------------------
       - name: Log into Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # -------------------------------------------
+      # Build & Push Image
+      # -------------------------------------------
       - name: Build Docker image
         run: |
           docker build -t gvega2212/polyglotcaptions:latest .
@@ -77,3 +83,21 @@ jobs:
       - name: Push Docker image
         run: |
           docker push gvega2212/polyglotcaptions:latest
+
+      # -------------------------------------------
+      # Azure Login
+      # -------------------------------------------
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # -------------------------------------------
+      # Deploy to Azure Web App for Containers
+      # -------------------------------------------
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "polyglotcaptions-api"
+          images: "gvega2212/polyglotcaptions:latest"
+          resource-group-name: "BCSAI2025-DEVOPS-STUDENT-4A"
