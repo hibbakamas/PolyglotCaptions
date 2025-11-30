@@ -1,25 +1,25 @@
 async function loadHistory() {
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/static/login.html"; // ensure correct path
+        window.location.href = "/";
         return;
     }
 
     try {
         const res = await fetch("/api/captions", {
-            headers: { "Authorization": `Bearer ${token}` }
+            headers: { 
+                "Authorization": `Bearer ${token}` 
+            }
         });
 
-        if (!res.ok) {
-            throw new Error("Failed to fetch history");
-        }
+        if (!res.ok) throw new Error("Failed to fetch history");
 
         const items = await res.json();
         const container = document.getElementById("historyList");
         container.innerHTML = "";
 
         if (!items || items.length === 0) {
-            container.innerHTML = "<p>No captions yet.</p>";
+            container.innerHTML = "<p>No captions found.</p>";
             return;
         }
 
@@ -37,6 +37,7 @@ async function loadHistory() {
             container.appendChild(block);
         });
 
+        // Delete listeners
         document.querySelectorAll(".delete-btn").forEach(btn => {
             btn.onclick = async () => {
                 const id = btn.getAttribute("data-id");
@@ -52,13 +53,14 @@ async function loadHistory() {
                     return;
                 }
 
-                loadHistory(); // reload after deletion
+                loadHistory(); // reload list
             };
         });
+
     } catch (err) {
         console.error(err);
-        const container = document.getElementById("historyList");
-        container.innerHTML = "<p>Error loading history.</p>";
+        document.getElementById("historyList").innerHTML =
+            "<p>Error loading history.</p>";
     }
 }
 

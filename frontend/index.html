@@ -42,20 +42,20 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("jwt");
-    if (!token) window.location.href = "/static/login.html";
+    if (!token) window.location.href = "/";
 
     document.getElementById("recordBtn").onclick = () =>
-        window.location.href = "/static/record.html";
+        window.location.href = "/record";
 
     document.getElementById("manualBtn").onclick = () =>
-        window.location.href = "/static/manual.html";
+        window.location.href = "/manual";
 
     document.getElementById("historyBtn").onclick = () =>
-        window.location.href = "/static/history.html";
+        window.location.href = "/history";
 
     document.getElementById("logoutBtn").onclick = () => {
         localStorage.removeItem("jwt");
-        window.location.href = "/static/login.html";
+        window.location.href = "/";
     };
 });
 </script>
