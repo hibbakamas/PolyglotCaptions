@@ -7,6 +7,7 @@ from app.routers.caption import router as caption_router
 from app.routers.manual import router as manual_router
 from app.routers.logs import router as logs_router
 from app.routers.auth import router as auth_router
+from app.routers.health import router as health_router
 
 app = FastAPI()
 
@@ -38,9 +39,10 @@ app.include_router(caption_router)
 app.include_router(manual_router)
 app.include_router(logs_router)
 app.include_router(auth_router)
+app.include_router(health_router)
 
 
-# ---- HEALTH CHECK ------------------------------------------
+# ---- ROOT HEALTH CHECK (legacy) -----------------------------
 @app.get("/health")
-async def health():
+async def root_health():
     return {"status": "ok"}
