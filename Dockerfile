@@ -1,9 +1,10 @@
-FROM python:3.11-bullseye   # Debian 11
+# Base image: Debian 11 + Python 3.11
+FROM python:3.11-bullseye
 
 WORKDIR /app
 
 # -------------------------------------------------------
-# Install system deps including ODBC + ffmpeg
+# Install system dependencies including ODBC for pyodbc
 # -------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     curl \
@@ -12,34 +13,34 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     build-essential \
     ffmpeg \
-    apt-transport-https && \
-    rm -rf /var/lib/apt/lists/*
+    apt-transport-https \
+    && rm -rf /var/lib/apt/lists/*
 
 # -------------------------------------------------------
-# Microsoft ODBC Driver 18 repo for Debian 11
+# Add Microsoft GPG key + repo for Debian 11
 # -------------------------------------------------------
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 RUN curl https://packages.microsoft.com/config/debian/11/prod.list \
     > /etc/apt/sources.list.d/mssql-release.list
 
 # -------------------------------------------------------
-# Install ODBC Driver 18
+# Install MS ODBC 18 driver
 # -------------------------------------------------------
 RUN apt-get update && \
     ACCEPT_EULA=Y apt-get install -y msodbcsql18
 
 # -------------------------------------------------------
-# Install Python deps
+# Install Python dependencies
 # -------------------------------------------------------
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # -------------------------------------------------------
-# Copy project
+# Copy app code
 # -------------------------------------------------------
 COPY . .
 
 # -------------------------------------------------------
-# Run API
+# Run the API
 # -------------------------------------------------------
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
