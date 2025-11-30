@@ -7,18 +7,23 @@ WORKDIR /app
 # -------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     curl \
-    apt-transport-https \
     gnupg \
     unixodbc \
     unixodbc-dev \
     build-essential \
-    ffmpeg && \
+    ffmpeg \
+    apt-transport-https && \
     rm -rf /var/lib/apt/lists/*
 
-# Add Microsoft package repo for ODBC Driver 18
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
-    curl https://packages.microsoft.com/config/debian/12/prod.list \
-        > /etc/apt/sources.list.d/mssql-release.list
+# -------------------------------------------------------
+# Add Microsoft package repo for ODBC Driver 18 (Debian 12)
+# -------------------------------------------------------
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+    | gpg --dearmor \
+    | tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
+
+RUN echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/config/debian/12/prod.list /" \
+    > /etc/apt/sources.list.d/mssql-release.list
 
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18
 
