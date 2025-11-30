@@ -42,7 +42,7 @@ def insert_caption_entry(
     processing_ms,
     session_id=None,
     user_id=None,
-    created_at=None,        # <-- FIX ADDED HERE
+    created_at=None,    # <-- needed for tests
 ):
     global _NEXT_ID
     cid = _NEXT_ID
@@ -57,7 +57,7 @@ def insert_caption_entry(
         "ProcessingMs": processing_ms,
         "SessionId": session_id,
         "UserId": user_id,
-        "CreatedAt": created_at,     # <-- Added to match real DB
+        "CreatedAt": created_at,
     }
     return cid
 
@@ -71,7 +71,7 @@ def fetch_recent_captions():
     return fetch_captions()
 
 
-def delete_caption_entry(caption_id):
+def delete_caption_entry(caption_id, user_id=None):   # <-- FIX ADDED HERE
     """Return True if deleted, False if not found."""
     return _FAKE_CAPTIONS.pop(caption_id, None) is not None
 
