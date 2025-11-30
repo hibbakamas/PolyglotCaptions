@@ -1,10 +1,12 @@
 from fastapi import APIRouter, UploadFile, Form, Depends, HTTPException, Request
 from datetime import datetime
 import logging
+
 from app.services.stt_azure import azure_transcribe
 from app.services.translator_azure import azure_translate_async
 from app.db.db import insert_caption_entry, fetch_captions, delete_caption_entry
 from app.utils.auth import get_current_user_from_token
+from app.utils.metrics import metric_caption_processed, metric_processing_time
 
 router = APIRouter(prefix="/api/captions", tags=["captions"])
 logger = logging.getLogger("polyglot")
@@ -26,23 +28,26 @@ async def create_caption(
     to_lang: str = Form(...),
     user_id: str = Depends(get_current_user)
 ):
+    start_time = datetime.utcnow()
+
     audio_bytes = await audio.read()
 
     transcript = azure_transcribe(audio_bytes, from_lang)
     translated = await azure_translate_async(transcript, from_lang, to_lang)
+
+    processing_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
 
     caption_id = insert_caption_entry(
         transcript=transcript,
         translated_text=translated,
         from_lang=from_lang,
         to_lang=to_lang,
-        processing_ms=0,
+        processing_ms=processing_ms,
         session_id=None,
         user_id=user_id,
         created_at=datetime.utcnow(),
     )
 
-    # NEW: Log to Application Insights
     logger.info("Caption created", extra={
         "caption_id": caption_id,
         "transcript": transcript,
@@ -50,12 +55,18 @@ async def create_caption(
         "from": from_lang,
         "to": to_lang,
         "user": user_id,
+        "processing_ms": processing_ms,
     })
+
+    # METRICS (log-based)
+    metric_caption_processed()
+    metric_processing_time(processing_ms)
 
     return {
         "id": caption_id,
         "transcript": transcript,
         "translated": translated,
+        "processing_ms": processing_ms
     }
 
 

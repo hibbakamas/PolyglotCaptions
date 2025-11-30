@@ -9,6 +9,8 @@ from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.trace.samplers import ProbabilitySampler
 from opencensus.trace.tracer import Tracer
+from app.routers.health import router as health_router
+
 
 from app.routers.caption import router as caption_router
 from app.routers.manual import router as manual_router

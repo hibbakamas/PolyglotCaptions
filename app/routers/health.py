@@ -1,39 +1,54 @@
+# app/routers/health.py
+
 from fastapi import APIRouter
-from pydantic import BaseModel
-from app.db.db import get_connection
+import pyodbc
+import requests
+from app.config import settings
 
 router = APIRouter(prefix="/api/health", tags=["health"])
 
+# -------------------------------------------------------------
+# LIVENESS: App is running
+# -------------------------------------------------------------
+@router.get("/live")
+async def live_check():
+    return {"status": "alive"}
 
-class HealthResponse(BaseModel):
-    status: str
+# -------------------------------------------------------------
+# READINESS: DB + Azure services reachable
+# -------------------------------------------------------------
+@router.get("/ready")
+async def ready_check():
+    checks = {
+        "database": False,
+        "translator_api": False,
+        "speech_api": False,
+    }
 
-
-@router.get("", response_model=HealthResponse)
-def health():
-    """
-    Basic health check: the API is running.
-    """
-    return HealthResponse(status="ok")
-
-
-@router.get("/live", response_model=HealthResponse)
-def live():
-    """
-    Liveness probe: App is running (no external dependencies).
-    """
-    return HealthResponse(status="alive")
-
-
-@router.get("/ready", response_model=HealthResponse)
-def ready():
-    """
-    Readiness probe: Checks database connectivity.
-    If DB cannot be reached, the app is not ready.
-    """
+    # ---- Database check ----
     try:
-        conn = get_connection()
+        conn = pyodbc.connect(settings.azure_sql_connection_string, timeout=3)
         conn.close()
-        return HealthResponse(status="ready")
+        checks["database"] = True
     except Exception:
-        return HealthResponse(status="not ready")
+        checks["database"] = False
+
+    # ---- Translator API check ----
+    try:
+        resp = requests.get(settings.azure_translator_endpoint, timeout=3)
+        checks["translator_api"] = resp.status_code < 500
+    except Exception:
+        checks["translator_api"] = False
+
+    # ---- Speech API check ----
+    try:
+        test_url = f"https://{settings.azure_speech_region}.stt.speech.microsoft.com"
+        resp = requests.get(test_url, timeout=3)
+        checks["speech_api"] = resp.status_code < 500
+    except Exception:
+        checks["speech_api"] = False
+
+    return {
+        "ready": all(checks.values()),
+        "checks": checks
+    }
