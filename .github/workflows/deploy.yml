@@ -41,13 +41,12 @@ jobs:
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build and Push AMD64 Docker image
+      - name: Build & Push image to Docker Hub
         run: |
           docker buildx create --use
           docker buildx build \
             --platform linux/amd64 \
-            -t gvega2212/polyglotcaptions:latest \
-            -t gvega2212/polyglotcaptions:${{ github.sha }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/polyglotcaptions:latest \
             --push .
 
       - name: Deploy to Azure Web App
@@ -55,4 +54,4 @@ jobs:
         with:
           app-name: polyglotcaptions-api
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: gvega2212/polyglotcaptions:${{ github.sha }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/polyglotcaptions:latest

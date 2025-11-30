@@ -1,9 +1,9 @@
-FROM python:3.11-slim   # Debian 12
+FROM python:3.11-bullseye   # Debian 11
 
 WORKDIR /app
 
 # -------------------------------------------------------
-# Install ODBC dependencies
+# Install system deps including ODBC + ffmpeg
 # -------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     curl \
@@ -12,34 +12,30 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     build-essential \
     ffmpeg \
-    apt-transport-https \
-    && rm -rf /var/lib/apt/lists/*
+    apt-transport-https && \
+    rm -rf /var/lib/apt/lists/*
 
 # -------------------------------------------------------
-# Add Microsoft repo for Debian 12 (REQUIRED FOR ODBC 18)
+# Microsoft ODBC Driver 18 repo for Debian 11
 # -------------------------------------------------------
-RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-    | gpg --dearmor \
-    | tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
-
-RUN echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] \
-    https://packages.microsoft.com/debian/12/prod/ stable main" \
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/debian/11/prod.list \
     > /etc/apt/sources.list.d/mssql-release.list
 
 # -------------------------------------------------------
-# Install MS ODBC 18 driver
+# Install ODBC Driver 18
 # -------------------------------------------------------
 RUN apt-get update && \
     ACCEPT_EULA=Y apt-get install -y msodbcsql18
 
 # -------------------------------------------------------
-# Install Python dependencies
+# Install Python deps
 # -------------------------------------------------------
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # -------------------------------------------------------
-# Copy app code
+# Copy project
 # -------------------------------------------------------
 COPY . .
 
