@@ -1,9 +1,9 @@
-FROM python:3.11-bullseye
+FROM python:3.11-slim   # Debian 12
 
 WORKDIR /app
 
 # -------------------------------------------------------
-# Install system dependencies including ODBC for pyodbc
+# Install ODBC dependencies
 # -------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     curl \
@@ -16,10 +16,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # -------------------------------------------------------
-# Add Microsoft GPG key + repo (Debian 11 works)
+# Add Microsoft repo for Debian 12 (REQUIRED FOR ODBC 18)
 # -------------------------------------------------------
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
-RUN curl https://packages.microsoft.com/config/debian/11/prod.list \
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+    | gpg --dearmor \
+    | tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
+
+RUN echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] \
+    https://packages.microsoft.com/debian/12/prod/ stable main" \
     > /etc/apt/sources.list.d/mssql-release.list
 
 # -------------------------------------------------------
@@ -40,6 +44,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # -------------------------------------------------------
-# Run the API
+# Run API
 # -------------------------------------------------------
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
