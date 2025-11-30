@@ -34,7 +34,14 @@ def create_user(username: str, hashed_password: str):
 # ---------------------------
 # CAPTION FUNCTIONS
 # ---------------------------
-def insert_caption_entry(transcript, translated_text, from_lang, to_lang, processing_ms):
+def insert_caption_entry(
+    transcript,
+    translated_text,
+    from_lang,
+    to_lang,
+    processing_ms,
+    session_id=None,
+):
     global _NEXT_ID
     cid = _NEXT_ID
     _NEXT_ID += 1
@@ -46,6 +53,7 @@ def insert_caption_entry(transcript, translated_text, from_lang, to_lang, proces
         "FromLang": from_lang,
         "ToLang": to_lang,
         "ProcessingMs": processing_ms,
+        "SessionId": session_id,
     }
     return cid
 
