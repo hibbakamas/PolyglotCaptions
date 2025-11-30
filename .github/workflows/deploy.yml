@@ -8,9 +8,6 @@ on:
 
 jobs:
 
-  ############################################################
-  # 1) TEST JOB — Runs pytest with stub DB
-  ############################################################
   test_and_build:
     runs-on: ubuntu-latest
 
@@ -36,10 +33,6 @@ jobs:
         run: |
           pytest --disable-warnings --maxfail=1 --cov=.
 
-  ############################################################
-  # 2) CD JOB — Build Docker image, push to DockerHub,
-  #              deploy to Azure Web App (Container)
-  ############################################################
   build_push_and_deploy:
     needs: test_and_build
     runs-on: ubuntu-latest
@@ -47,12 +40,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # ---- DockerHub Login ----
       - name: Login to Docker Hub
         run: |
           echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
-      # ---- Build and Push Docker Image ----
       - name: Build Docker image
         run: |
           docker build -t gvega2212/polyglotcaptions:latest .
@@ -61,12 +52,9 @@ jobs:
         run: |
           docker push gvega2212/polyglotcaptions:latest
 
-      # ---- Deploy to Azure Web App using Publish Profile ----
       - name: Deploy to Azure Web App (Docker)
         uses: azure/webapps-deploy@v2
         with:
           app-name: polyglotcaptions-api
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           images: gvega2212/polyglotcaptions:latest
-
-          
