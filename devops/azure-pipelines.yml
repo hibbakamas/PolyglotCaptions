@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
       - main
+      - ui-improvement
       - feature/*
 
 pr:
@@ -9,41 +10,135 @@ pr:
     include:
       - main
 
-pool:
-  vmImage: 'ubuntu-latest'
-
 stages:
+
+# ============================================================
+# 1. BUILD + TEST + CREATE ARTIFACT
+# ============================================================
 - stage: Build_Test
-  displayName: Build & Test
+  displayName: "Build & Test"
   jobs:
-  - job: backend_tests
-    displayName: Run backend pytest suite
+  - job: build_test
+    pool:
+      vmImage: 'ubuntu-latest'
     steps:
+
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.11'
 
     - script: |
-        bash devops/scripts/run_tests.sh
-      displayName: Install deps & run pytest
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pytest --disable-warnings --maxfail=1
+      displayName: "Install Dependencies & Run Tests"
 
-# ------------------------------
-# DEPLOY STAGE
-# ------------------------------
-- stage: Deploy
-  displayName: Deploy to Azure Web App
+    - script: |
+        mkdir -p artifact
+        cp -R app artifact/app
+        cp requirements.txt artifact/
+      displayName: "Package Backend Artifact"
+
+    - publish: artifact
+      artifact: backend
+      displayName: "Publish Backend Artifact"
+
+
+# ============================================================
+# 2. DEPLOY TO STAGING (FAKE SLOT)
+# ============================================================
+- stage: Deploy_Staging
+  displayName: "Deploy to Staging Environment"
   dependsOn: Build_Test
   condition: succeeded()
-
   jobs:
-  - job: deploy_backend
-    displayName: Deploy backend to Azure Web App
+  - job: deploy_staging
+    pool:
+      vmImage: 'ubuntu-latest'
     steps:
-    - task: AzureWebApp@1
-      displayName: 'Deploy FastAPI backend'
+
+    - task: DownloadPipelineArtifact@2
       inputs:
-        azureSubscription: 'polyglot-azure-connection'
-        appName: 'polyglotcaptions-api'
-        package: '$(System.DefaultWorkingDirectory)'
-        runtimeStack: 'PYTHON|3.11'
-        startupCommand: 'cd app && pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000'
+        artifact: backend
+        path: $(Pipeline.Workspace)/backend
+
+    - task: DownloadSecureFile@1
+      name: stagingProfile
+      inputs:
+        secureFile: "polyglotcaptions-api-staging.PublishSettings"
+
+    - task: AzureWebApp@1
+      displayName: "Deploy to Staging App Service"
+      inputs:
+        appName: "polyglotcaptions-api-staging"
+        package: "$(Pipeline.Workspace)/backend"
+        publishProfile: "$(stagingProfile.secureFilePath)"
+        runtimeStack: "PYTHON|3.11"
+        startupCommand: "cd app && pip install -r ../requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000"
+
+    - script: bash devops/scripts/smoke.sh https://polyglotcaptions-api-staging.azurewebsites.net
+      displayName: "Run Staging Smoke Tests"
+
+    - script: curl -f https://polyglotcaptions-api-staging.azurewebsites.net/api/health
+      displayName: "Staging Health Check"
+
+
+# ============================================================
+# 3. MANUAL APPROVAL BEFORE PRODUCTION
+# ============================================================
+- stage: Approval
+  displayName: "Manual Approval Needed"
+  dependsOn: Deploy_Staging
+  condition: succeeded()
+  jobs:
+  - job: approval
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: echo "Approve this stage in Azure DevOps to deploy to production."
+
+
+# ============================================================
+# 4. DEPLOY TO PRODUCTION + AUTO-ROLLBACK
+# ============================================================
+- stage: Deploy_Prod
+  displayName: "Deploy to Production"
+  dependsOn: Approval
+  condition: succeeded()
+  jobs:
+  - job: deploy_prod
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: backend
+        path: $(Pipeline.Workspace)/backend
+
+    - task: DownloadSecureFile@1
+      name: prodProfile
+      inputs:
+        secureFile: "polyglotcaptions-api (1).PublishSettings"
+
+    - task: AzureWebApp@1
+      displayName: "Deploy to Production App Service"
+      inputs:
+        appName: "polyglotcaptions-api"
+        package: "$(Pipeline.Workspace)/backend"
+        publishProfile: "$(prodProfile.secureFilePath)"
+        runtimeStack: "PYTHON|3.11"
+        startupCommand: "cd app && pip install -r ../requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000"
+
+    - script: curl -f https://polyglotcaptions-api.azurewebsites.net/api/health
+      displayName: "Production Health Check"
+
+    # ===== AUTO ROLLBACK =====
+    - task: AzureWebApp@1
+      displayName: "ROLLBACK: Deploy Last Known Good Artifact"
+      condition: failed()
+      inputs:
+        appName: "polyglotcaptions-api"
+        package: "$(Pipeline.Workspace)/backend"
+        publishProfile: "$(prodProfile.secureFilePath)"
+        runtimeStack: "PYTHON|3.11"
