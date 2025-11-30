@@ -1,37 +1,66 @@
 """
-DB Stub used ONLY for CI.
-This version replaces ALL real DB functions so tests run without Azure SQL.
+Stateful DB Stub used ONLY for CI.
+Simulates the Azure SQL DB fully in memory so tests behave consistently.
 """
+
+# In-memory fake DB
+_FAKE_CAPTIONS = {}
+_FAKE_USERS = {
+    "testuser": {
+        "username": "testuser",
+        "hashed_password": "$2b$12$FakeHashedPasswordForTestsOnly",
+    }
+}
+
+# Auto-increment counter for captions
+_NEXT_ID = 1
+
 
 # ---------------------------
 # USER FUNCTIONS (auth.py)
 # ---------------------------
 def get_user_by_username(username: str):
-    """Return a fake user record."""
-    return {
-        "username": username,
-        "hashed_password": "$2b$12$FakeHashedPasswordForTestsOnly",
-    }
+    return _FAKE_USERS.get(username)
+
 
 def create_user(username: str, hashed_password: str):
-    """Pretend user was created."""
+    _FAKE_USERS[username] = {
+        "username": username,
+        "hashed_password": hashed_password,
+    }
     return True
 
 
 # ---------------------------
 # CAPTION FUNCTIONS
 # ---------------------------
-def insert_caption_entry(*args, **kwargs):
-    return 123
+def insert_caption_entry(transcript, translated_text, from_lang, to_lang, processing_ms):
+    global _NEXT_ID
+    cid = _NEXT_ID
+    _NEXT_ID += 1
+
+    _FAKE_CAPTIONS[cid] = {
+        "Id": cid,
+        "Transcript": transcript,
+        "TranslatedText": translated_text,
+        "FromLang": from_lang,
+        "ToLang": to_lang,
+        "ProcessingMs": processing_ms,
+    }
+    return cid
+
 
 def fetch_captions():
-    return [{"Id": 1}]
+    return list(_FAKE_CAPTIONS.values())
 
-def delete_caption_entry(caption_id):
-    return True
 
 def fetch_recent_captions():
-    return [{"Id": 1}]
+    return fetch_captions()
+
+
+def delete_caption_entry(caption_id):
+    """Return True if deleted, False if not found."""
+    return _FAKE_CAPTIONS.pop(caption_id, None) is not None
 
 
 # ---------------------------
