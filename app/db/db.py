@@ -37,8 +37,31 @@ def get_connection():
 # ============================================================
 
 _FAKE_CAPTIONS = {}   # caption_id → record dict
+_FAKE_USERS = {}      # username → user dict
 _NEXT_ID = 1
 
+
+# ---------------------------
+#  STUB USER FUNCTIONS
+# ---------------------------
+
+def _fake_get_user_by_username(username: str):
+    return _FAKE_USERS.get(username)
+
+
+def _fake_create_user(username: str, password_hash: str):
+    if username in _FAKE_USERS:
+        return None
+    _FAKE_USERS[username] = {
+        "username": username,
+        "password_hash": password_hash,
+    }
+    return _FAKE_USERS[username]
+
+
+# ---------------------------
+#  STUB CAPTION FUNCTIONS
+# ---------------------------
 
 def _fake_insert_caption_entry(
     transcript,
@@ -82,7 +105,43 @@ def _fake_fetch_recent_captions():
 
 
 # ============================================================
-#   REAL DATABASE LOGIC (LOCAL / PRODUCTION)
+#   REAL USER DATABASE LOGIC
+# ============================================================
+
+def _real_get_user_by_username(username: str):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT Username, PasswordHash FROM Users WHERE Username = ?", username)
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "username": row[0],
+            "password_hash": row[1],
+        }
+
+
+def _real_create_user(username: str, password_hash: str):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        # Check existence
+        cursor.execute("SELECT Username FROM Users WHERE Username = ?", username)
+        if cursor.fetchone():
+            return None
+
+        cursor.execute(
+            "INSERT INTO Users (Username, PasswordHash) VALUES (?, ?)",
+            username, password_hash
+        )
+        return {
+            "username": username,
+            "password_hash": password_hash,
+        }
+
+
+# ============================================================
+#   REAL CAPTION DATABASE LOGIC
 # ============================================================
 
 def _real_insert_caption_entry(
@@ -150,11 +209,13 @@ def _real_fetch_recent_captions():
 
 
 # ============================================================
-#   EXPORT PUBLIC FUNCTIONS (CI uses stub, local uses real)
+#   EXPORT PUBLIC FUNCTIONS
 # ============================================================
+
+get_user_by_username = _fake_get_user_by_username if RUNNING_IN_CI else _real_get_user_by_username
+create_user = _fake_create_user if RUNNING_IN_CI else _real_create_user
 
 insert_caption_entry = _fake_insert_caption_entry if RUNNING_IN_CI else _real_insert_caption_entry
 fetch_captions = _fake_fetch_captions if RUNNING_IN_CI else _real_fetch_captions
 delete_caption_entry = _fake_delete_caption_entry if RUNNING_IN_CI else _real_delete_caption_entry
 fetch_recent_captions = _fake_fetch_recent_captions if RUNNING_IN_CI else _real_fetch_recent_captions
-

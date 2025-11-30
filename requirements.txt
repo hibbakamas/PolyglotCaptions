@@ -9,6 +9,7 @@ python-dotenv
 python-multipart
 requests
 pyodbc
+pytest-cov
 
 azure-core
 azure-cognitiveservices-speech
