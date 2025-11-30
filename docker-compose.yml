@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: polyglot_api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+    restart: always
