@@ -9,12 +9,15 @@ BEGIN
         ToLang NVARCHAR(10) NOT NULL,
         ProcessingMs INT NOT NULL,
         SessionId NVARCHAR(50) NULL,
+        UserId NVARCHAR(255) NOT NULL,   
         CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
     );
 
     CREATE INDEX IX_Captions_CreatedAt ON dbo.Captions (CreatedAt DESC);
     CREATE INDEX IX_Captions_SessionId ON dbo.Captions (SessionId);
+    CREATE INDEX IX_Captions_UserId ON dbo.Captions (UserId); 
 END
+
 
 ------ Users table ----- 
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Users' AND schema_id = SCHEMA_ID('dbo'))
