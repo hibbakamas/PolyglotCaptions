@@ -9,13 +9,31 @@
 <header>
   <h1>History</h1>
   <div class="header-buttons">
-    <button onclick="window.location='/'" class="btn">Back</button>
+    <button onclick="window.location='/static/index.html'" class="btn">Back</button>
+    <button onclick="logout()" class="btn btn--danger">Logout</button>
   </div>
 </header>
 
 <div class="page-container">
   <div id="historyList"></div>
 </div>
+
+<script>
+  // Require login
+  const token = localStorage.getItem("jwt");
+  if (!token) {
+    window.location.href = "/login.html";
+  }
+
+  function goHome() {
+    window.location.href = "/";
+  }
+
+  function logout() {
+    localStorage.removeItem("jwt");
+    window.location.href = "/static/login.html";
+  }
+</script>
 
 <script src="/static/history.js"></script>
 </body>

@@ -1,59 +1,75 @@
-let mediaRecorder;
-let audioChunks = [];
+document.addEventListener("DOMContentLoaded", () => {
+    let mediaRecorder;
+    let audioChunks = [];
 
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const statusEl = document.getElementById("status");
-const originalEl = document.getElementById("original");
-const translatedEl = document.getElementById("translated");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const statusEl = document.getElementById("status");
+    const originalEl = document.getElementById("original");
+    const translatedEl = document.getElementById("translated");
 
-async function startRecording() {
-    audioChunks = [];
-    originalEl.textContent = "";
-    translatedEl.textContent = "";
+    async function startRecording() {
+        audioChunks = [];
+        originalEl.textContent = "";
+        translatedEl.textContent = "";
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
 
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-    mediaRecorder.onstop = sendAudioToBackend;
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = sendAudioToBackend;
 
-    mediaRecorder.start();
+        mediaRecorder.start();
 
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
-    statusEl.textContent = "Recording…";
-}
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        statusEl.textContent = "Recording…";
+    }
 
-async function sendAudioToBackend() {
-    statusEl.textContent = "Processing…";
+    async function sendAudioToBackend() {
+        statusEl.textContent = "Processing…";
 
-    const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-    const formData = new FormData();
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const formData = new FormData();
 
-    formData.append("audio", audioBlob);
-    formData.append("from_lang", document.getElementById("fromLang").value);
-    formData.append("to_lang", document.getElementById("toLang").value);
+        formData.append("audio", audioBlob);
+        formData.append("from_lang", document.getElementById("fromLang").value);
+        formData.append("to_lang", document.getElementById("toLang").value);
 
-    const res = await fetch("/api/captions", {
-        method: "POST",
-        body: formData
-    });
+        // Include JWT token in Authorization header
+        const token = localStorage.getItem("jwt"); // adjust key if different
+        console.log("DEBUG: Token being sent:", token);
 
-    const data = await res.json();
+        const res = await fetch("/api/captions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            body: formData
+        });
 
-    originalEl.textContent = data.transcript || "(no transcript)";
-    translatedEl.textContent = data.translated || "(no translation)";
+        if (!res.ok) {
+            const err = await res.json();
+            statusEl.textContent = `Error: ${err.detail || res.statusText}`;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            return;
+        }
 
-    statusEl.textContent = "Done";
+        const data = await res.json();
 
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-}
+        originalEl.textContent = data.transcript || "(no transcript)";
+        translatedEl.textContent = data.translated || "(no translation)";
 
-stopBtn.onclick = () => {
-    mediaRecorder.stop();
-    statusEl.textContent = "Stopping…";
-};
+        statusEl.textContent = "Done";
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
 
-startBtn.onclick = startRecording;
+    stopBtn.onclick = () => {
+        mediaRecorder.stop();
+        statusEl.textContent = "Stopping…";
+    };
+
+    startBtn.onclick = startRecording;
+});
