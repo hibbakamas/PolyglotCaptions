@@ -3,9 +3,6 @@ FROM python:3.11-bullseye
 
 WORKDIR /app
 
-# -------------------------------------------------------
-# Install system dependencies including ODBC for pyodbc
-# -------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
