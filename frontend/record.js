@@ -10,13 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/";
+        window.location.href = "/static/login.html";
         return;
     }
 
-    // --------------------------
-    // START RECORDING
-    // --------------------------
     async function startRecording() {
         audioChunks = [];
         originalEl.textContent = "";
@@ -35,9 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
         statusEl.textContent = "Recording…";
     }
 
-    // --------------------------
-    // SEND AUDIO → API
-    // --------------------------
     async function sendAudioToBackend() {
         statusEl.textContent = "Processing…";
 
@@ -48,40 +42,33 @@ document.addEventListener("DOMContentLoaded", () => {
         formData.append("from_lang", document.getElementById("fromLang").value);
         formData.append("to_lang", document.getElementById("toLang").value);
 
-        try {
-            const res = await fetch("/api/captions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                },
-                body: formData
-            });
+        const res = await fetch("/api/captions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            body: formData
+        });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                statusEl.textContent = `Error: ${data.detail}`;
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-                return;
-            }
-
-            originalEl.textContent = data.transcript || "(no transcript)";
-            translatedEl.textContent = data.translated || "(no translation)";
-            statusEl.textContent = "Done";
-
-        } catch (err) {
-            console.error(err);
-            statusEl.textContent = "Error contacting API";
+        if (!res.ok) {
+            let err;
+            try { err = await res.json(); } catch { err = {}; }
+            statusEl.textContent = `Error: ${err.detail || "Unknown error"}`;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            return;
         }
 
+        const data = await res.json();
+
+        originalEl.textContent = data.transcript || "(no transcript)";
+        translatedEl.textContent = data.translated || "(no translation)";
+
+        statusEl.textContent = "Done";
         startBtn.disabled = false;
         stopBtn.disabled = true;
     }
 
-    // --------------------------
-    // BUTTON HOOKS
-    // --------------------------
     stopBtn.onclick = () => {
         mediaRecorder.stop();
         statusEl.textContent = "Stopping…";

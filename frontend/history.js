@@ -1,15 +1,13 @@
 async function loadHistory() {
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/";
+        window.location.href = "/static/login.html";
         return;
     }
 
     try {
         const res = await fetch("/api/captions", {
-            headers: { 
-                "Authorization": `Bearer ${token}` 
-            }
+            headers: { "Authorization": `Bearer ${token}` }
         });
 
         if (!res.ok) throw new Error("Failed to fetch history");
@@ -19,7 +17,7 @@ async function loadHistory() {
         container.innerHTML = "";
 
         if (!items || items.length === 0) {
-            container.innerHTML = "<p>No captions found.</p>";
+            container.innerHTML = "<p>No captions yet.</p>";
             return;
         }
 
@@ -37,23 +35,17 @@ async function loadHistory() {
             container.appendChild(block);
         });
 
-        // Delete listeners
         document.querySelectorAll(".delete-btn").forEach(btn => {
             btn.onclick = async () => {
-                const id = btn.getAttribute("data-id");
-                if (!confirm("Delete this entry?")) return;
+                const id = btn.dataset.id;
 
-                const delRes = await fetch(`/api/captions/${id}`, {
+                const del = await fetch(`/api/captions/${id}`, {
                     method: "DELETE",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
 
-                if (!delRes.ok) {
-                    alert("Failed to delete entry");
-                    return;
-                }
-
-                loadHistory(); // reload list
+                if (!del.ok) return alert("Failed to delete");
+                loadHistory();
             };
         });
 
