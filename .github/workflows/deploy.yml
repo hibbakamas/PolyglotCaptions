@@ -1,4 +1,4 @@
-name: CI - Tests, Docker Build & Deploy
+name: CI - Security, Tests, Docker Build & Deploy
 
 on:
   push:
@@ -7,7 +7,44 @@ on:
   pull_request:
 
 jobs:
+  security_checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------
+      # SECRET SCANNING (TruffleHog)
+      # ---------------------------------------------------------
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: .
+          only_verified: false   
+
+      # ---------------------------------------------------------
+      # STATIC APPLICATION SECURITY TESTING (Semgrep)
+      # ---------------------------------------------------------
+      - name: Run Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >
+            p/security-audit
+            p/owasp-top-ten
+        continue-on-error: true   # <= Prevents the pipeline from breaking
+
+      # ---------------------------------------------------------
+      # 🔐 3. DEPENDENCY VULNERABILITY SCAN (pip-audit)
+      # ---------------------------------------------------------
+      - name: Python vuln scan with pip-audit
+        run: |
+          python3 -m pip install pip-audit
+          pip-audit || true   # <= Makes it non-blocking
+
+
   test_and_build:
+    needs: security_checks
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +65,7 @@ jobs:
       - name: Run tests + coverage
         run: |
           pytest --disable-warnings --maxfail=1 --cov=app
+
 
   build_push_and_deploy:
     needs: test_and_build
