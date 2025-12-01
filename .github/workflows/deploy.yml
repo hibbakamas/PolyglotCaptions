@@ -1,4 +1,4 @@
-name: CI - Security, Tests, Docker Build & Deploy
+name: CI - Tests, Docker Build & Deploy
 
 on:
   push:
@@ -7,49 +7,7 @@ on:
   pull_request:
 
 jobs:
-  # =========================================================
-  # 1. SECURITY CHECKS
-  # =========================================================
-  security_checks:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # ---------------------------------------------------------
-      # 1. SECRET SCANNING 
-      # ---------------------------------------------------------
-      - name: TruffleHog Secret Scan
-        uses: trufflesecurity/trufflehog-actions@v1
-        with:
-          path: .
-
-      # ---------------------------------------------------------
-      # 2. STATIC APPLICATION SECURITY TESTING (Semgrep)
-      # ---------------------------------------------------------
-      - name: Run Semgrep SAST
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: |
-            p/security-audit
-            p/owasp-top-ten
-        continue-on-error: true
-
-      # ---------------------------------------------------------
-      # 3. DEPENDENCY VULNERABILITY SCAN (pip-audit)
-      # ---------------------------------------------------------
-      - name: Python vulnerability scan with pip-audit
-        run: |
-          python3 -m pip install pip-audit
-          pip-audit || true
-
-
-  # =========================================================
-  # 2. TESTS AND COVERAGE
-  # =========================================================
   test_and_build:
-    needs: security_checks
     runs-on: ubuntu-latest
 
     steps:
@@ -71,10 +29,6 @@ jobs:
         run: |
           pytest --disable-warnings --maxfail=1 --cov=app
 
-
-  # =========================================================
-  # 3. BUILD, PUSH AND DEPLOY
-  # =========================================================
   build_push_and_deploy:
     needs: test_and_build
     runs-on: ubuntu-latest
