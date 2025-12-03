@@ -1,4 +1,4 @@
-name: CI - Tests, Docker Build & Deploy
+name: CI - Security, Tests, Docker Build & Deploy
 
 on:
   push:
@@ -7,7 +7,29 @@ on:
   pull_request:
 
 jobs:
+  # =========================================================
+  # 1. SECURITY SCAN (SAST)
+  # =========================================================
+  security_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: |
+            p/security-audit
+            p/owasp-top-ten
+        continue-on-error: true  # don’t block build if warnings found
+
+  # =========================================================
+  # 2. TESTS AND COVERAGE
+  # =========================================================
   test_and_build:
+    needs: security_scan
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +51,9 @@ jobs:
         run: |
           pytest --disable-warnings --maxfail=1 --cov=app
 
+  # =========================================================
+  # 3. BUILD, PUSH, AND DEPLOY
+  # =========================================================
   build_push_and_deploy:
     needs: test_and_build
     runs-on: ubuntu-latest
