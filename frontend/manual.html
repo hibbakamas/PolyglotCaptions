@@ -17,6 +17,11 @@
         min-height: 60px;
         white-space: pre-wrap;
     }
+    #detectedLang {
+        font-size: 0.9em;
+        color: #9ca3af;
+        margin-top: 5px;
+    }
   </style>
 </head>
 
@@ -40,17 +45,26 @@
 
     <label>From:</label>
     <select id="manualFrom">
+      <option value="auto">Auto-detect</option>
       <option value="en">English</option>
       <option value="es">Spanish</option>
+      <option value="fr">French</option>
+      <option value="de">German</option>
+      <option value="it">Italian</option>
     </select>
 
     <label>To:</label>
     <select id="manualTo">
-      <option value="es">Spanish</option>
       <option value="en">English</option>
+      <option value="es">Spanish</option>
+      <option value="fr">French</option>
+      <option value="de">German</option>
+      <option value="it">Italian</option>
     </select>
 
     <button id="manualBtn" class="btn btn--primary" style="margin-top:10px;">Translate</button>
+
+    <div id="detectedLang"></div>
 
     <h3 style="margin-top:25px;">Translated Text:</h3>
 
@@ -73,7 +87,71 @@
   }
 </script>
 
-<script src="/static/manual.js"></script>
+<script>
+  const manualBtn = document.getElementById("manualBtn");
+  const saveBtn = document.getElementById("saveManualBtn");
+  const input = document.getElementById("manualInput");
+  const manualFrom = document.getElementById("manualFrom");
+  const manualTo = document.getElementById("manualTo");
+  const resultBox = document.getElementById("manualResult");
+  const detectedLangBox = document.getElementById("detectedLang");
+
+  async function translateText() {
+    const fromLang = manualFrom.value;
+    const toLang = manualTo.value;
+    const text = input.value.trim();
+    if (!text) return;
+
+    detectedLangBox.textContent = "Translating...";
+    resultBox.textContent = "";
+
+    const res = await fetch("/api/manual/translate", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ text, from_lang: fromLang, to_lang: toLang })
+    });
+
+    if (res.status === 200) {
+      const data = await res.json();
+      resultBox.textContent = data.translated_text;
+
+      // Show detected language if auto-detect
+      if (fromLang === "auto" && data.detected_language) {
+        detectedLangBox.textContent = "Detected language: " + data.detected_language;
+      } else {
+        detectedLangBox.textContent = "";
+      }
+    } else {
+      const err = await res.json();
+      detectedLangBox.textContent = "Error: " + err.detail || "Translation failed";
+    }
+  }
+
+  async function saveTranslation() {
+    const transcript = input.value.trim();
+    const translated_text = resultBox.textContent;
+    const from_lang = manualFrom.value;
+    const to_lang = manualTo.value;
+    if (!transcript || !translated_text) return;
+
+    await fetch("/api/manual/save", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ transcript, translated_text, from_lang, to_lang })
+    });
+
+    alert("Translation saved!");
+  }
+
+  manualBtn.addEventListener("click", translateText);
+  saveBtn.addEventListener("click", saveTranslation);
+</script>
 
 </body>
 </html>
