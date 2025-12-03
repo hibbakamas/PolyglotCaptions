@@ -3,18 +3,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const fromEl = document.getElementById("manualFrom");
     const toEl = document.getElementById("manualTo");
     const resultEl = document.getElementById("manualResult");
+    const detectedEl = document.getElementById("detectedLang");
     const translateBtn = document.getElementById("manualBtn");
     const saveBtn = document.getElementById("saveManualBtn");
 
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/static/login.html";
+        window.location.href = "/";
         return;
     }
 
-    translateBtn.onclick = async () => {
+    async function translateText() {
         const text = inputEl.value.trim();
         if (!text) return;
+
+        resultEl.textContent = "Translating...";
+        detectedEl.textContent = "";
 
         try {
             const res = await fetch("/api/manual/translate", {
@@ -31,15 +35,28 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const data = await res.json();
+
             resultEl.textContent = data.translated_text || "(no translation)";
+
+            // Show detected language if auto-detect
+            if (fromEl.value === "auto" && data.detected_language) {
+                detectedEl.textContent = `Detected language: ${data.detected_language}`;
+            } else {
+                detectedEl.textContent = "";
+            }
+
         } catch (err) {
             console.error(err);
+            detectedEl.textContent = "";
+            resultEl.textContent = "(translation failed)";
             alert("Translation failed");
         }
-    };
+    }
 
-    saveBtn.onclick = async () => {
-        if (!inputEl.value.trim() || !resultEl.textContent.trim()) return;
+    async function saveTranslation() {
+        const transcript = inputEl.value.trim();
+        const translated_text = resultEl.textContent.trim();
+        if (!transcript || !translated_text) return;
 
         try {
             const res = await fetch("/api/manual/save", {
@@ -49,8 +66,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    transcript: inputEl.value,
-                    translated_text: resultEl.textContent,
+                    transcript,
+                    translated_text,
                     from_lang: fromEl.value,
                     to_lang: toEl.value
                 })
@@ -62,5 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(err);
             alert("Save failed");
         }
-    };
+    }
+
+    translateBtn.addEventListener("click", translateText);
+    saveBtn.addEventListener("click", saveTranslation);
 });
