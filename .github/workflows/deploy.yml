@@ -1,4 +1,4 @@
-name: CI - Security, Tests, Docker Build & Deploy
+name: CI/CD - Security, Tests, Docker Build & Deploy
 
 on:
   push:
@@ -47,9 +47,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
-      - name: Run tests + coverage
+      - name: Run tests + enforce 70% coverage
         run: |
-          pytest --disable-warnings --maxfail=1 --cov=app
+          pytest --disable-warnings --maxfail=1 --cov=app --cov-fail-under=70
 
   # =========================================================
   # 3. BUILD, PUSH, AND DEPLOY
