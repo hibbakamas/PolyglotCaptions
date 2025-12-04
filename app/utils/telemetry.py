@@ -9,12 +9,11 @@ def setup_telemetry(connection_string: str | None):
     logger.setLevel(logging.INFO)
 
     if connection_string:
-        # logs
+        # Logs
         handler = AzureLogHandler(connection_string=f"InstrumentationKey={connection_string}")
-        handler.lock = logging.Lock()     # <-- FIXES your local crash
         logger.addHandler(handler)
 
-        # tracing
+        # Tracing
         tracer = Tracer(
             exporter=AzureExporter(connection_string=f"InstrumentationKey={connection_string}"),
             sampler=ProbabilitySampler(1.0),
