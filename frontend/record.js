@@ -10,26 +10,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/static/login.html";
+        window.location.href = "/";
         return;
     }
 
     async function startRecording() {
-        audioChunks = [];
-        originalEl.textContent = "";
-        translatedEl.textContent = "";
+        try {
+            audioChunks = [];
+            originalEl.textContent = "";
+            translatedEl.textContent = "";
 
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
 
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = sendAudioToBackend;
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = sendAudioToBackend;
 
-        mediaRecorder.start();
+            mediaRecorder.start();
 
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-        statusEl.textContent = "Recording…";
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            statusEl.textContent = "Recording…";
+        } catch (err) {
+            console.error("Microphone error:", err);
+            statusEl.textContent = "Microphone access denied or unavailable.";
+        }
     }
 
     async function sendAudioToBackend() {
@@ -38,40 +43,47 @@ document.addEventListener("DOMContentLoaded", () => {
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
         const formData = new FormData();
 
-        formData.append("audio", audioBlob);
+        formData.append("audio", audioBlob, "recording.webm");
         formData.append("from_lang", document.getElementById("fromLang").value);
         formData.append("to_lang", document.getElementById("toLang").value);
 
-        const res = await fetch("/api/captions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${token}`
-            },
-            body: formData
-        });
+        try {
+            const res = await fetch("/api/captions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
+                body: formData
+            });
 
-        if (!res.ok) {
-            let err;
-            try { err = await res.json(); } catch { err = {}; }
-            statusEl.textContent = `Error: ${err.detail || "Unknown error"}`;
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                statusEl.textContent = `Error: ${err.detail || res.statusText}`;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                return;
+            }
+
+            const data = await res.json();
+
+            originalEl.textContent = data.transcript || "(no transcript)";
+            translatedEl.textContent = data.translated || "(no translation)";
+
+            statusEl.textContent = "Done ✅";
+        } catch (error) {
+            console.error("Upload failed:", error);
+            statusEl.textContent = "Error uploading audio.";
+        } finally {
             startBtn.disabled = false;
             stopBtn.disabled = true;
-            return;
         }
-
-        const data = await res.json();
-
-        originalEl.textContent = data.transcript || "(no transcript)";
-        translatedEl.textContent = data.translated || "(no translation)";
-
-        statusEl.textContent = "Done";
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
     }
 
     stopBtn.onclick = () => {
-        mediaRecorder.stop();
-        statusEl.textContent = "Stopping…";
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+            statusEl.textContent = "Stopping…";
+        }
     };
 
     startBtn.onclick = startRecording;
