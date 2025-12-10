@@ -1,6 +1,7 @@
 from io import BytesIO
 from unittest.mock import patch
 
+
 # Use patch so no ffmpeg is called
 @patch("app.routers.caption.azure_transcribe", return_value="hello world")
 @patch("app.routers.caption.azure_translate_async", return_value="hola mundo")

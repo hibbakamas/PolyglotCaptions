@@ -1,20 +1,18 @@
 import os
-import logging
+
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.routers.caption import router as caption_router
-from app.routers.manual import router as manual_router
-from app.routers.logs import router as logs_router
-from app.routers.auth import router as auth_router
-from app.routers.health import router as health_router
-
-from app.utils.telemetry import setup_telemetry
 from app.config import settings
-
+from app.routers.auth import router as auth_router
+from app.routers.caption import router as caption_router
+from app.routers.health import router as health_router
+from app.routers.logs import router as logs_router
+from app.routers.manual import router as manual_router
+from app.utils.telemetry import setup_telemetry
 
 # ============================================================================
 #  FASTAPI APP INITIALIZATION
@@ -29,6 +27,7 @@ logger = setup_telemetry(settings.app_insights_key)
 # Log once at startup so you can see telemetry immediately
 if logger:
     logger.info("✅ PolyglotCaptions API started successfully — telemetry active.")
+
 
 # Middleware to log every incoming request (helps Application Insights visualize traffic)
 class LogAllRequestsMiddleware(BaseHTTPMiddleware):
@@ -46,6 +45,7 @@ class LogAllRequestsMiddleware(BaseHTTPMiddleware):
                 },
             )
         return response
+
 
 app.add_middleware(LogAllRequestsMiddleware)
 
@@ -66,6 +66,7 @@ app.add_middleware(
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
+
 @app.get("/", include_in_schema=False)
 async def serve_login():
     return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
@@ -75,17 +76,21 @@ async def serve_login():
 async def serve_dashboard():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
+
 @app.get("/record", include_in_schema=False)
 async def serve_record():
     return FileResponse(os.path.join(FRONTEND_DIR, "record.html"))
+
 
 @app.get("/manual", include_in_schema=False)
 async def serve_manual():
     return FileResponse(os.path.join(FRONTEND_DIR, "manual.html"))
 
+
 @app.get("/history", include_in_schema=False)
 async def serve_history():
     return FileResponse(os.path.join(FRONTEND_DIR, "history.html"))
+
 
 # ============================================================================
 #  ROUTERS
@@ -95,6 +100,7 @@ app.include_router(manual_router)
 app.include_router(logs_router)
 app.include_router(auth_router)
 app.include_router(health_router)
+
 
 # ============================================================================
 #  HEALTH ENDPOINT

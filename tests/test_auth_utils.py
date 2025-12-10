@@ -1,5 +1,7 @@
-from app.utils.auth import create_access_token, get_current_user_from_token
 from datetime import timedelta
+
+from app.utils.auth import create_access_token, get_current_user_from_token
+
 
 def test_token_roundtrip():
     token = create_access_token({"sub": "testuser"}, timedelta(hours=1))

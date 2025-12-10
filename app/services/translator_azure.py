@@ -1,12 +1,15 @@
 # app/services/translator_azure.py
 
-import logging
-import requests
 import asyncio
+import logging
+
+import requests
+
 from app.config import settings
 from app.services.translator_stub import fake_translate
 
 logger = logging.getLogger("polyglot.services.translator_azure")
+
 
 def normalize_lang(lang: str) -> str:
     """
@@ -19,6 +22,7 @@ def normalize_lang(lang: str) -> str:
     if "-" in lang:
         return lang.split("-")[0]
     return lang
+
 
 def azure_translate(text: str, from_lang: str, to_lang: str) -> str:
     if not text:
@@ -37,11 +41,11 @@ def azure_translate(text: str, from_lang: str, to_lang: str) -> str:
         "api-version": "3.0",
         "to": [to_lang],
     }
-    
+
     # Only add 'from' parameter if it's not auto-detection
     if from_lang:
         params["from"] = from_lang
-    
+
     headers = {
         "Ocp-Apim-Subscription-Key": settings.azure_translator_key,
         "Ocp-Apim-Subscription-Region": settings.azure_translator_region,
@@ -54,8 +58,7 @@ def azure_translate(text: str, from_lang: str, to_lang: str) -> str:
     data = resp.json()
     return data[0]["translations"][0]["text"]
 
+
 async def azure_translate_async(text: str, from_lang: str, to_lang: str) -> str:
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(
-        None, lambda: azure_translate(text, from_lang, to_lang)
-    )
+    return await loop.run_in_executor(None, lambda: azure_translate(text, from_lang, to_lang))
