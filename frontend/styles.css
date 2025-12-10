@@ -59,6 +59,19 @@ a {
     gap: 16px;
 }
 
+.brand-link {
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.brand-link:focus-visible {
+    outline: 2px dashed rgba(192, 132, 252, 0.7);
+    outline-offset: 6px;
+}
+
 .brand-logo {
     width: 58px;
     height: 58px;
@@ -581,6 +594,35 @@ textarea {
     border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.04);
     box-shadow: var(--shadow);
+    position: relative;
+}
+
+.auth-brand::before {
+    content: "";
+    position: absolute;
+    inset: -60px;
+    background: radial-gradient(circle at top, rgba(192, 132, 252, 0.28), rgba(5, 5, 15, 0.85));
+    opacity: 0.45;
+    filter: blur(8px);
+}
+
+.auth-brand::after {
+    content: "";
+    position: absolute;
+    width: 1000px;
+    height: 1000px;
+    background: url('/static/assets/logo-grape.svg') no-repeat center;
+    background-size: contain;
+    opacity: 0.42;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.auth-brand > * {
+    position: relative;
+    z-index: 1;
 }
 
 .auth-brand p {
