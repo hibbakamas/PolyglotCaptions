@@ -1,12 +1,13 @@
+import logging
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from datetime import datetime
-import logging
 
-from app.services.translator_azure import azure_translate_async
 from app.db.db import insert_caption_entry
+from app.services.translator_azure import azure_translate_async
 from app.utils.auth import get_current_user_from_token
-from app.utils.metrics import metric_processing_time, metric_caption_processed
+from app.utils.metrics import metric_caption_processed, metric_processing_time
 
 router = APIRouter(prefix="/api/manual", tags=["manual"])
 logger = logging.getLogger("polyglot")
@@ -40,12 +41,10 @@ async def manual_translate(req: ManualRequest, user_id: str = Depends(get_curren
     ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
     metric_processing_time(ms)
 
-    logger.info("Manual translation", extra={
-        "text": req.text,
-        "translated": translated,
-        "user": user_id,
-        "processing_ms": ms
-    })
+    logger.info(
+        "Manual translation",
+        extra={"text": req.text, "translated": translated, "user": user_id, "processing_ms": ms},
+    )
 
     return {"translated_text": translated}
 
@@ -65,13 +64,16 @@ def manual_save(req: ManualSaveRequest, user_id: str = Depends(get_current_user)
 
     metric_caption_processed()
 
-    logger.info("Manual caption saved", extra={
-        "caption_id": caption_id,
-        "transcript": req.transcript,
-        "translated": req.translated_text,
-        "from": req.from_lang,
-        "to": req.to_lang,
-        "user": user_id
-    })
+    logger.info(
+        "Manual caption saved",
+        extra={
+            "caption_id": caption_id,
+            "transcript": req.transcript,
+            "translated": req.translated_text,
+            "from": req.from_lang,
+            "to": req.to_lang,
+            "user": user_id,
+        },
+    )
 
     return {"status": "saved", "id": caption_id}

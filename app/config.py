@@ -1,5 +1,7 @@
-from pydantic_settings import BaseSettings
 import secrets
+
+from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     # --- Azure ---
@@ -37,5 +39,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
 
 settings = Settings()

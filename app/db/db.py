@@ -1,9 +1,14 @@
 import os
-import pyodbc
 from datetime import datetime
+
+try:
+    import pyodbc
+except ImportError:  # pragma: no cover - handled via RUNNING_IN_CI fallback
+    pyodbc = None
+
 from app.config import settings
 
-RUNNING_IN_CI = os.getenv("CI") == "true"
+RUNNING_IN_CI = os.getenv("CI") == "true" or pyodbc is None
 
 
 def get_connection():
@@ -28,8 +33,14 @@ def _fake_create_user(username, hashed_password):
 
 
 def _fake_insert_caption_entry(
-    transcript, translated_text, from_lang, to_lang, processing_ms,
-    session_id=None, user_id=None, created_at=None,
+    transcript,
+    translated_text,
+    from_lang,
+    to_lang,
+    processing_ms,
+    session_id=None,
+    user_id=None,
+    created_at=None,
 ):
     global _NEXT_ID
     cid = _NEXT_ID
@@ -80,12 +91,20 @@ def _real_get_user_by_username(username):
 def _real_create_user(username, hashed_password):
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO Users (Username, HashedPassword) VALUES (?, ?)", username, hashed_password)
+        cursor.execute(
+            "INSERT INTO Users (Username, HashedPassword) VALUES (?, ?)", username, hashed_password
+        )
 
 
 def _real_insert_caption_entry(
-    transcript, translated_text, from_lang, to_lang, processing_ms,
-    session_id=None, user_id=None, created_at=None,
+    transcript,
+    translated_text,
+    from_lang,
+    to_lang,
+    processing_ms,
+    session_id=None,
+    user_id=None,
+    created_at=None,
 ):
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -96,8 +115,14 @@ def _real_insert_caption_entry(
             OUTPUT INSERTED.Id
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            transcript, translated_text, from_lang, to_lang,
-            processing_ms, session_id, user_id, created_at or datetime.utcnow(),
+            transcript,
+            translated_text,
+            from_lang,
+            to_lang,
+            processing_ms,
+            session_id,
+            user_id,
+            created_at or datetime.utcnow(),
         )
         row = cursor.fetchone()
         return row[0]
@@ -123,7 +148,9 @@ def _real_update_caption_entry(caption_id, new_text, user_id=None):
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE Captions SET TranslatedText = ? WHERE Id = ? AND UserId = ?",
-            new_text, caption_id, user_id,
+            new_text,
+            caption_id,
+            user_id,
         )
         return cursor.rowcount > 0
 
@@ -131,7 +158,9 @@ def _real_update_caption_entry(caption_id, new_text, user_id=None):
 def _real_fetch_recent_captions():
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM Captions ORDER BY CreatedAt DESC OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY")
+        cursor.execute(
+            "SELECT * FROM Captions ORDER BY CreatedAt DESC OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY"
+        )
         rows = cursor.fetchall()
         return [dict(zip([col[0] for col in cursor.description], row)) for row in rows]
 
@@ -142,5 +171,7 @@ create_user = _fake_create_user if RUNNING_IN_CI else _real_create_user
 insert_caption_entry = _fake_insert_caption_entry if RUNNING_IN_CI else _real_insert_caption_entry
 fetch_captions = _fake_fetch_captions if RUNNING_IN_CI else _real_fetch_captions
 delete_caption_entry = _fake_delete_caption_entry if RUNNING_IN_CI else _real_delete_caption_entry
-fetch_recent_captions = _fake_fetch_recent_captions if RUNNING_IN_CI else _real_fetch_recent_captions
+fetch_recent_captions = (
+    _fake_fetch_recent_captions if RUNNING_IN_CI else _real_fetch_recent_captions
+)
 update_caption_entry = _fake_update_caption_entry if RUNNING_IN_CI else _real_update_caption_entry

@@ -1,15 +1,16 @@
-from fastapi import APIRouter, UploadFile, Form, Depends, HTTPException, Request
-from datetime import datetime
 import logging
+from datetime import datetime
 
-from app.services.stt_azure import azure_transcribe
-from app.services.translator_azure import azure_translate_async
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
+
 from app.db.db import (
-    insert_caption_entry,
-    fetch_captions,
     delete_caption_entry,
+    fetch_captions,
+    insert_caption_entry,
     update_caption_entry,
 )
+from app.services.stt_azure import azure_transcribe
+from app.services.translator_azure import azure_translate_async
 from app.utils.auth import get_current_user_from_token
 from app.utils.metrics import metric_caption_processed, metric_processing_time
 
@@ -31,8 +32,8 @@ async def get_current_user(request: Request) -> str:
 @router.post("")
 async def create_caption(
     audio: UploadFile,
-    from_lang: str = Form(...),   # e.g. "en", "es", "fr", "de", "it"
-    to_lang: str = Form(...),     # same codes as in manual translation
+    from_lang: str = Form(...),  # e.g. "en", "es", "fr", "de", "it"
+    to_lang: str = Form(...),  # same codes as in manual translation
     user_id: str = Depends(get_current_user),
 ):
     """

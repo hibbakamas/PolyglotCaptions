@@ -1,8 +1,10 @@
 import logging
+
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.ext.azure.trace_exporter import AzureExporter
-from opencensus.trace.tracer import Tracer
 from opencensus.trace.samplers import ProbabilitySampler
+from opencensus.trace.tracer import Tracer
+
 
 def setup_telemetry(connection_string: str | None):
     logger = logging.getLogger("polyglot")
@@ -14,11 +16,9 @@ def setup_telemetry(connection_string: str | None):
         logger.addHandler(handler)
 
         # Tracing
-        tracer = Tracer(
+        Tracer(
             exporter=AzureExporter(connection_string=f"InstrumentationKey={connection_string}"),
             sampler=ProbabilitySampler(1.0),
         )
-    else:
-        tracer = None
 
     return logger

@@ -10,6 +10,8 @@ python-multipart
 requests
 pyodbc
 pytest-cov
+ruff
+pre-commit
 
 azure-core
 azure-cognitiveservices-speech
