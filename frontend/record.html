@@ -1,87 +1,97 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <title>Record Caption</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Polyglot Captions – Recorder</title>
   <link rel="stylesheet" href="/static/styles.css"/>
-  <style>
-    .record-card {
-        max-width: 700px;
-        margin: 40px auto;
-    }
-    .translation-box {
-        background: #1f2937;
-        border: 1px solid #374151;
-        padding: 15px;
-        border-radius: 10px;
-        min-height: 50px;
-        margin-bottom: 20px;
-        white-space: pre-wrap;
-    }
-  </style>
 </head>
 
-<body>
+<body data-page="record">
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand" aria-label="Polyglot Captions">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <p class="brand-kicker">Live Session</p>
+          <p class="brand-sub">Capture and translate audio instantly</p>
+        </div>
+      </div>
 
-<header>
-  <h1>Record Caption</h1>
+      <nav class="nav-links" aria-label="Primary">
+        <button class="nav-link" data-nav="record">Record</button>
+        <button class="nav-link" data-nav="manual">Manual</button>
+        <button class="nav-link" data-nav="history">History</button>
+      </nav>
 
-  <div class="header-buttons">
-    <button class="btn" onclick="window.location='/'">Back</button>
-    <button class="btn btn--danger" onclick="logout()">Logout</button>
+      <div class="header-actions">
+        <span class="status-chip status-chip--idle">Recording ready</span>
+        <button id="logoutBtn" class="btn btn--ghost">Logout</button>
+      </div>
+    </header>
+
+    <main class="content record-layout" role="main">
+      <section class="controls-panel">
+        <p class="panel-eyebrow">Session setup</p>
+        <h2>Recording controls</h2>
+
+        <div class="form-field">
+          <label for="fromLang">From language</label>
+          <select id="fromLang">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="toLang">To language</label>
+          <select id="toLang">
+            <option value="es" selected>Spanish</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+          </select>
+        </div>
+
+        <div class="hero__actions" style="margin-top:12px;">
+          <button id="startBtn" class="btn btn--accent">Start recording</button>
+          <button id="stopBtn" class="btn btn--soft" disabled>Stop</button>
+        </div>
+
+        <p id="status" class="panel-copy" style="margin-top:18px;">Idle</p>
+
+        <ul class="tip-list">
+          <li>Allow microphone access when prompted.</li>
+          <li>Keep input steady for clearer transcripts.</li>
+          <li>Switch languages anytime—the next chunk will follow.</li>
+        </ul>
+      </section>
+
+      <section class="text-panel">
+        <p class="panel-eyebrow">Live output</p>
+        <h2>Transcript & translation</h2>
+
+        <div class="transcript-grid">
+          <article>
+            <p class="metric-label">Original</p>
+            <div class="transcript-card" id="original"></div>
+          </article>
+          <article>
+            <p class="metric-label">Translated</p>
+            <div class="transcript-card" id="translated"></div>
+          </article>
+        </div>
+      </section>
+    </main>
   </div>
-</header>
 
-<div class="page-container">
-
-  <div class="card record-card">
-
-    <h2>Live Translation</h2>
-
-    <label>From:</label>
-    <select id="fromLang">
-      <option value="en">English</option>
-      <option value="es">Spanish</option>
-      <option value="fr">French</option>
-      <option value="de">German</option>
-      <option value="it">Italian</option>
-      <option value="pt">Portuguese</option>
-    </select>
-
-    <label>To:</label>
-    <select id="toLang">
-      <option value="es" selected>Spanish</option>
-      <option value="en">English</option>
-      <option value="fr">French</option>
-      <option value="de">German</option>
-      <option value="it">Italian</option>
-      <option value="pt">Portuguese</option>
-    </select>
-
-    <button id="startBtn" class="btn btn--primary" style="margin-top:15px;">Start</button>
-    <button id="stopBtn" class="btn" disabled style="margin-top:10px;">Stop</button>
-
-    <p id="status" style="margin-top:15px; font-size:16px;">Idle</p>
-
-    <h3>Original:</h3>
-    <div class="translation-box" id="original"></div>
-
-    <h3>Translated:</h3>
-    <div class="translation-box" id="translated"></div>
-
-  </div>
-</div>
-
-<script>
-  const token = localStorage.getItem("jwt");
-  if (!token) window.location.href = "/";
-
-  function logout() {
-    localStorage.removeItem("jwt");
-    window.location.href = "/";
-  }
-</script>
-
-<script src="/static/record.js"></script>
-
+  <script src="/static/app.js" defer></script>
+  <script src="/static/record.js" defer></script>
 </body>
 </html>

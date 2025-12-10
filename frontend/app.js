@@ -1,24 +1,77 @@
-function ensureLoggedIn() {
+const ROUTES = {
+  record: "/record",
+  manual: "/manual",
+  history: "/history",
+};
+
+const LOGIN_PAGE = "/login.html";
+
+function ensureSession() {
   const token = localStorage.getItem("jwt");
   if (!token) {
-      alert("Please log in first.");
-      window.location.href = "/login.html";
-      return false;
+    window.location.href = LOGIN_PAGE;
+    return null;
   }
-  return true;
+  return token;
 }
 
-function goRecord() {
-  if (!ensureLoggedIn()) return;
-  window.location.href = "/record";
+function handleNavigation(target) {
+  const destination = ROUTES[target];
+  if (!destination) return;
+  if (!ensureSession()) return;
+  window.location.href = destination;
 }
 
-function goManual() {
-  if (!ensureLoggedIn()) return;
-  window.location.href = "/manual";
+function hydrateDashboard() {
+  const token = ensureSession();
+  if (!token) return;
+
+  window.currentPolyglotToken = token;
+
+  const sessionChip = document.getElementById("sessionState");
+  if (sessionChip) {
+    sessionChip.textContent = "Ready";
+    sessionChip.classList.remove("status-chip--idle");
+    sessionChip.classList.add("status-chip--ready");
+  }
+
+  const preferredPair = localStorage.getItem("preferredPair") || "English → Spanish";
+  const preferredEl = document.getElementById("preferredPair");
+  if (preferredEl) preferredEl.textContent = preferredPair;
+
+  const lastSession = localStorage.getItem("lastSessionHuman") || "No sessions yet";
+  const lastSessionEl = document.getElementById("lastSession");
+  if (lastSessionEl) lastSessionEl.textContent = lastSession;
+
+  const savedCount = Number(localStorage.getItem("savedTranslationsCount") || 0);
+  const savedCountEl = document.getElementById("savedCount");
+  if (savedCountEl) savedCountEl.textContent = savedCount;
 }
 
-function goHistory() {
-  if (!ensureLoggedIn()) return;
-  window.location.href = "/history";
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const token = ensureSession();
+  if (!token) return;
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("jwt");
+      window.location.href = LOGIN_PAGE;
+    });
+  }
+
+  document.querySelectorAll("[data-nav]").forEach((btn) => {
+    btn.addEventListener("click", () => handleNavigation(btn.dataset.nav));
+    if (btn.dataset.nav === document.body.dataset.page) {
+      btn.classList.add("is-active");
+    }
+  });
+
+  const heroRecord = document.getElementById("heroRecord");
+  if (heroRecord) heroRecord.addEventListener("click", () => handleNavigation("record"));
+
+  const heroManual = document.getElementById("heroManual");
+  if (heroManual) heroManual.addEventListener("click", () => handleNavigation("manual"));
+
+  hydrateDashboard();
+});
