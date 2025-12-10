@@ -1,43 +1,47 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <title>Caption History</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Polyglot Captions – History</title>
   <link rel="stylesheet" href="/static/styles.css"/>
-  <style>
-    .history-page {
-        max-width: 800px;
-        margin: 40px auto;
-    }
-    .edit-area {
-        margin-top: 8px;
-    }
-  </style>
 </head>
 
-<body>
+<body data-page="history">
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <p class="brand-kicker">Archive</p>
+          <p class="brand-sub">Edit and export previous sessions</p>
+        </div>
+      </div>
 
-<header>
-  <h1>History</h1>
-  <div class="header-buttons">
-    <button onclick="window.location='/'" class="btn">Back</button>
-    <button onclick="logout()" class="btn btn--danger">Logout</button>
+      <nav class="nav-links">
+        <button class="nav-link" data-nav="record">Record</button>
+        <button class="nav-link" data-nav="manual">Manual</button>
+        <button class="nav-link" data-nav="history">History</button>
+      </nav>
+
+      <div class="header-actions">
+        <span class="status-chip status-chip--idle">History synced</span>
+        <button id="logoutBtn" class="btn btn--ghost">Logout</button>
+      </div>
+    </header>
+
+    <main class="content history-layout">
+      <section class="history-panel">
+        <p class="panel-eyebrow">Saved sessions</p>
+        <h2>Caption history</h2>
+        <p class="panel-copy">Select any entry to update translations or remove it entirely. Changes are saved instantly.</p>
+
+        <div id="historyList" class="history-list" aria-live="polite"></div>
+      </section>
+    </main>
   </div>
-</header>
 
-<div class="page-container history-page">
-  <div id="historyList"></div>
-</div>
-
-<script>
-  const token = localStorage.getItem("jwt");
-  if (!token) window.location.href = "/";
-
-  function logout() {
-    localStorage.removeItem("jwt");
-    window.location.href = "/";
-  }
-</script>
-
-<script src="/static/history.js"></script>
+  <script src="/static/app.js" defer></script>
+  <script src="/static/history.js" defer></script>
 </body>
 </html>

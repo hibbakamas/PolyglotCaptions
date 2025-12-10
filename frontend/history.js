@@ -1,7 +1,7 @@
 async function loadHistory() {
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/static/login.html";
+        window.location.href = "/login.html";
         return;
     }
 
@@ -17,24 +17,31 @@ async function loadHistory() {
         container.innerHTML = "";
 
         if (!items || items.length === 0) {
-            container.innerHTML = "<p>No captions yet.</p>";
+            container.innerHTML = "<p class=\"panel-copy\">No captions yet.</p>";
             return;
         }
 
+        localStorage.setItem("savedTranslationsCount", items.length);
+
         items.forEach(item => {
             const block = document.createElement("div");
-            block.className = "history-item";
+            block.className = "history-card";
             block.innerHTML = `
-                <p><strong>From:</strong> ${item.FromLang} → <strong>To:</strong> ${item.ToLang}</p>
-                <p><strong>Original:</strong> ${item.Transcript}</p>
-                <p><strong>Translated:</strong> <span class="translated-text">${item.TranslatedText}</span></p>
+                <p class="metric-label">Language pair</p>
+                <h3>${item.FromLang} → ${item.ToLang}</h3>
+                <p><strong>Original</strong><br/>${item.Transcript}</p>
+                <p><strong>Translated</strong><br/><span class="translated-text">${item.TranslatedText}</span></p>
                 <div class="edit-area" style="display:none;">
                     <textarea class="edit-input">${item.TranslatedText}</textarea>
-                    <button class="btn save-btn" data-id="${item.Id}">Save</button>
-                    <button class="btn cancel-btn">Cancel</button>
+                    <div class="actions">
+                        <button class="btn btn--accent save-btn" data-id="${item.Id}">Save</button>
+                        <button class="btn btn--soft cancel-btn">Cancel</button>
+                    </div>
                 </div>
-                <button class="btn edit-btn" data-id="${item.Id}">Edit</button>
-                <button class="btn delete-btn" data-id="${item.Id}">Delete</button>
+                <div class="actions">
+                    <button class="btn btn--soft edit-btn" data-id="${item.Id}">Edit</button>
+                    <button class="btn btn--danger delete-btn" data-id="${item.Id}">Delete</button>
+                </div>
             `;
             container.appendChild(block);
         });

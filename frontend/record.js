@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/";
+        window.location.href = "/login.html";
         return;
     }
 
@@ -68,6 +68,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             originalEl.textContent = data.transcript || "(no transcript)";
             translatedEl.textContent = data.translated || "(no translation)";
+
+            const fromValue = document.getElementById("fromLang").value;
+            const toValue = document.getElementById("toLang").value;
+            const pairLabel = `${fromValue.toUpperCase()} → ${toValue.toUpperCase()}`;
+            localStorage.setItem("preferredPair", pairLabel);
+
+            const now = new Date();
+            localStorage.setItem("lastSession", now.toISOString());
+            localStorage.setItem("lastSessionHuman", now.toLocaleString());
 
             statusEl.textContent = "Done ✅";
         } catch (error) {
