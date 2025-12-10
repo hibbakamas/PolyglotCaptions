@@ -1,7 +1,7 @@
 async function loadHistory() {
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/login.html";
+        window.location.href = "/";
         return;
     }
 
@@ -48,16 +48,16 @@ async function loadHistory() {
 
         document.querySelectorAll(".edit-btn").forEach(btn => {
             btn.onclick = () => {
-                const parent = btn.parentElement;
-                parent.querySelector(".edit-area").style.display = "block";
-                parent.querySelector(".translated-text").style.display = "none";
+                const card = btn.closest(".history-card");
+                card.querySelector(".edit-area").style.display = "block";
+                card.querySelector(".translated-text").style.display = "none";
                 btn.style.display = "none";
             };
         });
 
         document.querySelectorAll(".cancel-btn").forEach(btn => {
             btn.onclick = () => {
-                const parent = btn.closest(".history-item");
+                const parent = btn.closest(".history-card");
                 parent.querySelector(".edit-area").style.display = "none";
                 parent.querySelector(".translated-text").style.display = "inline";
                 parent.querySelector(".edit-btn").style.display = "inline-block";
@@ -66,7 +66,7 @@ async function loadHistory() {
 
         document.querySelectorAll(".save-btn").forEach(btn => {
             btn.onclick = async () => {
-                const parent = btn.closest(".history-item");
+                const parent = btn.closest(".history-card");
                 const id = btn.dataset.id;
                 const newText = parent.querySelector(".edit-input").value;
 

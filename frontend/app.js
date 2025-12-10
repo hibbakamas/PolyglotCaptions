@@ -4,7 +4,7 @@ const ROUTES = {
   history: "/history",
 };
 
-const LOGIN_PAGE = "/login.html";
+const LOGIN_PAGE = "/";
 
 function ensureSession() {
   const token = localStorage.getItem("jwt");

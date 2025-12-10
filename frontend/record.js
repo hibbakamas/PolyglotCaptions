@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const token = localStorage.getItem("jwt");
     if (!token) {
-        window.location.href = "/login.html";
+        window.location.href = "/";
         return;
     }
 

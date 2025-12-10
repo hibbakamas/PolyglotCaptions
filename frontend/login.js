@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (res.ok) {
             localStorage.setItem("jwt", data.access_token);
             // redirect to main page
-            window.location.href = "/";
+            window.location.href = "/dashboard";
         } else {
             msgEl.textContent = data.detail || "Login failed";
         }
