@@ -3,20 +3,20 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Polyglot Captions – History</title>
+  <title>Mora – History</title>
   <link rel="stylesheet" href="/static/styles.css"/>
 </head>
 
 <body data-page="history">
   <div class="app-shell">
     <header class="site-header">
-      <div class="brand">
-        <img src="/static/assets/logo-grape.svg" alt="Polyglot Captions logo" class="brand-logo"/>
-        <div>
+      <button type="button" class="brand brand-link" aria-label="Mora dashboard" data-nav="home">
+        <img src="/static/assets/logo-grape.svg" alt="Mora logo" class="brand-logo"/>
+        <div class="brand-text">
           <p class="brand-kicker">Archive</p>
           <p class="brand-sub">Edit and export previous sessions</p>
         </div>
-      </div>
+      </button>
 
       <nav class="nav-links">
         <button class="nav-link" data-nav="record">Record</button>
@@ -25,7 +25,7 @@
       </nav>
 
       <div class="header-actions">
-        <span class="status-chip status-chip--idle">History synced</span>
+        <span class="status-chip status-chip--ready">History synced</span>
         <button id="logoutBtn" class="btn btn--ghost">Logout</button>
       </div>
     </header>

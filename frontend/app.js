@@ -1,4 +1,5 @@
 const ROUTES = {
+  home: "/dashboard",
   record: "/record",
   manual: "/manual",
   history: "/history",
