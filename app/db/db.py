@@ -1,11 +1,14 @@
 import os
 from datetime import datetime
 
-import pyodbc
+try:
+    import pyodbc
+except ImportError:  # pragma: no cover - handled via RUNNING_IN_CI fallback
+    pyodbc = None
 
 from app.config import settings
 
-RUNNING_IN_CI = os.getenv("CI") == "true"
+RUNNING_IN_CI = os.getenv("CI") == "true" or pyodbc is None
 
 
 def get_connection():

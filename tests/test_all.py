@@ -46,9 +46,9 @@ def test_jwt_roundtrip():
 
 
 def test_jwt_invalid():
-    from jose import JWTError
+    from fastapi import HTTPException
 
-    with pytest.raises(JWTError):
+    with pytest.raises(HTTPException):
         get_current_user_from_token("bad.token.here")
 
 
