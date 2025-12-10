@@ -70,6 +70,11 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 async def serve_login():
     return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
 
+
+@app.get("/dashboard", include_in_schema=False)
+async def serve_dashboard():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
 @app.get("/record", include_in_schema=False)
 async def serve_record():
     return FileResponse(os.path.join(FRONTEND_DIR, "record.html"))

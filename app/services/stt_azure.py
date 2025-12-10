@@ -35,7 +35,11 @@ def azure_transcribe(audio_bytes: bytes, from_lang: str) -> str:
     if not audio_bytes:
         return ""
 
-    if not settings.azure_speech_key or not settings.azure_speech_region:
+    if (not settings.azure_speech_key or
+            not settings.azure_speech_region or
+            speechsdk is None):
+        if speechsdk is None:
+            logger.warning("Azure Speech SDK not installed; using stub transcript.")
         return fake_transcribe(audio_bytes, from_lang)
 
     wav_path = convert_webm_to_wav(audio_bytes)
